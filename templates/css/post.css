@@ -41,6 +41,11 @@
 .post-content p {
     margin: calc(var(--spacing-unit) * 1.5) 0;
     line-height: var(--line-height-body);
+    text-align: justify;
+    text-indent: 2em;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
 }
 
 /* Images with proper alt text handling - WCAG 1.1.1 */

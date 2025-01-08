@@ -35,3 +35,38 @@ export interface Matter {
     read(filepath: string, options?: GrayMatterOptions): GrayMatterFile;
     stringify(str: string, data: any, options?: GrayMatterOptions): string;
 }
+
+export interface SiteConfig {
+    title: string;
+    description: string;
+    language: string;
+    author: {
+        name: string;
+        email: string;
+        url: string;
+    };
+    social: {
+        github: string;
+        twitter: string;
+    };
+}
+
+export interface BlogConfig {
+    postsPerPage: number;
+    dateFormat: string;
+    license: {
+        name: string;
+        url: string;
+    };
+}
+
+export interface ThemeConfig {
+    defaultMode: 'light' | 'dark' | 'auto';
+    accentColor: string;
+}
+
+export interface Config {
+    site: SiteConfig;
+    blog: BlogConfig;
+    theme: ThemeConfig;
+}
