@@ -275,6 +275,33 @@ header {
     border: 0;
 }
 
+/* Footer styling */
+.site-footer {
+    margin-top: calc(var(--spacing-unit) * 4);
+    padding-top: var(--spacing-unit);
+    border-top: 1px solid var(--border-color);
+    color: var(--subtle-color);
+    font-size: calc(var(--font-size-base) * 0.9);
+    text-align: center;
+}
+
+.site-footer a {
+    color: var(--subtle-color);
+    text-decoration: none;
+}
+
+.site-footer a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+}
+
+.copyleft {
+    display: inline-block;
+    transform: rotate(180deg);
+    font-size: 1.1em;
+    margin-right: 0.1em;
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
     .theme-switch-wrapper {

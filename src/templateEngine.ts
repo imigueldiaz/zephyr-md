@@ -2,11 +2,13 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { format, parse } from 'date-fns';
 import { BlogPost } from './types';
+import { minify } from 'html-minifier';
 
 interface SiteConfig {
     site: {
         title: string;
         description: string;
+        language: string;
         author: {
             name: string;
             email: string;
@@ -40,6 +42,16 @@ export class TemplateEngine {
     private templates: Map<string, string> = new Map();
     private cssFiles: Set<string> = new Set();
     private readonly defaultDateFormat = 'dd/MM/yyyy HH:mm';
+    private readonly minifyOptions = {
+        collapseWhitespace: true,
+        removeComments: true,
+        minifyCSS: true,
+        minifyJS: true,
+        removeRedundantAttributes: true,
+        removeScriptTypeAttributes: true,
+        removeStyleLinkTypeAttributes: true,
+        useShortDoctype: true
+    };
 
     constructor() {
         this.loadConfig().catch(error => {
@@ -55,7 +67,6 @@ export class TemplateEngine {
             const configPath = join(__dirname, '../config.json');
             const configContent = await readFile(configPath, 'utf-8');
             this.config = JSON.parse(configContent);
-            console.log(this.config);
         } catch (error) {
             console.error('Error loading config:', error);
             throw error;
@@ -113,23 +124,15 @@ export class TemplateEngine {
     }
 
     private getNestedValue(obj: any, path: string): any {
-        // Si es una fecha y el path termina en '_formatted', formateamos la fecha
-        if (path.endsWith('_formatted')) {
-            const datePath = path.replace('_formatted', '');
-            const dateValue = this.getNestedValue(obj, datePath);
-            if (dateValue) {
-                return this.formatDate(dateValue);
-            }
-        }
         return path.split('.').reduce((current, key) => 
-            current && current[key] !== undefined ? current[key] : undefined, 
-            obj
-        );
+            current && current[key] !== undefined ? current[key] : undefined, obj);
     }
 
     private replaceTemplateVariables(template: string, data: TemplateData): string {
+        let result = template;
+
         // Handle #each directives
-        template = template.replace(
+        result = result.replace(
             /\{\{#each\s+([^}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g,
             (match: string, key: string, content: string) => {
                 const array = this.getNestedValue(data, key.trim());
@@ -147,7 +150,7 @@ export class TemplateEngine {
         );
 
         // Handle #if directives
-        template = template.replace(
+        result = result.replace(
             /\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g,
             (match: string, key: string, content: string) => {
                 const value = this.getNestedValue(data, key.trim());
@@ -156,51 +159,79 @@ export class TemplateEngine {
         );
 
         // Handle regular variables
-        return template.replace(
+        result = result.replace(
             /\{\{([^}]+)\}\}/g,
             (match: string, key: string) => {
                 const value = this.getNestedValue(data, key.trim());
                 return value !== undefined ? String(value) : match;
             }
         );
+
+        return result;
+    }
+
+    private processTemplateData(data: TemplateData): TemplateData {
+        const processedData: TemplateData = { ...data };
+
+        // Procesar fechas si existen
+        if (processedData.date) {
+            processedData.date = processedData.date; // Mantener la fecha original para el atributo datetime
+            processedData.date_formatted = this.formatDate(processedData.date);
+        }
+
+        // Procesar fechas en posts si existen
+        if (Array.isArray(processedData.posts)) {
+            processedData.posts = processedData.posts.map(post => ({
+                ...post,
+                date: post.date, // Mantener la fecha original para el atributo datetime
+                date_formatted: this.formatDate(post.date)
+            }));
+        }
+
+        return processedData;
+    }
+
+    private async renderTemplate(templateName: string, data: TemplateData): Promise<string> {
+        let template = this.templates.get(templateName);
+        if (!template) {
+            template = await this.loadTemplate(templateName);
+            this.templates.set(templateName, template);
+        }
+
+        // Procesar los datos y reemplazar variables en la plantilla
+        const processedData = this.processTemplateData(data);
+        let html = this.replaceTemplateVariables(template, processedData);
+
+        // Minificar el HTML antes de devolverlo
+        return minify(html, this.minifyOptions);
     }
 
     async renderPost(post: BlogPost): Promise<string> {
-        const baseTemplate = await this.loadTemplate('base');
-        const postTemplate = await this.loadTemplate('post');
-        
-        const postData: TemplateData = {
+        const baseTemplate = await this.renderTemplate('base', {
             ...this.getCommonData(),
-            title: post.title,
-            date: post.date,
-            content: post.content
-        };
-
-        const postContent = this.replaceTemplateVariables(postTemplate, postData);
-        return this.replaceTemplateVariables(baseTemplate, {
-            ...postData,
-            content: postContent
+            content: await this.renderTemplate('post', {
+                ...this.getCommonData(),
+                title: post.title,
+                date: post.date,
+                content: post.content
+            })
         });
+        return baseTemplate;
     }
 
     async renderIndex(posts: BlogPost[]): Promise<string> {
-        const baseTemplate = await this.loadTemplate('base');
-        const indexTemplate = await this.loadTemplate('index');
-        
-        const indexData: TemplateData = {
+        const baseTemplate = await this.renderTemplate('base', {
             ...this.getCommonData(),
-            posts: posts.map(post => ({
-                title: post.title,
-                date: post.date,
-                excerpt: post.excerpt,
-                slug: post.slug
-            }))
-        };
-
-        const indexContent = this.replaceTemplateVariables(indexTemplate, indexData);
-        return this.replaceTemplateVariables(baseTemplate, {
-            ...indexData,
-            content: indexContent
+            content: await this.renderTemplate('index', {
+                ...this.getCommonData(),
+                posts: posts.map(post => ({
+                    title: post.title,
+                    date: post.date,
+                    excerpt: post.excerpt,
+                    slug: post.slug
+                }))
+            })
         });
+        return baseTemplate;
     }
 }

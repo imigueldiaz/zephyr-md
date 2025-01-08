@@ -43,7 +43,7 @@ export class MarkdownProcessor {
                 return hljs.highlightAuto(code).value;
             },
             langPrefix: 'hljs language-',
-            breaks: true,           // Convierte saltos de línea en <br>
+            breaks: false,         // Los párrafos se separan por líneas en blanco
             gfm: true,             // GitHub Flavored Markdown
             headerIds: true,       // Añade IDs a los encabezados
             mangle: false,         // No modifica los IDs de los encabezados
