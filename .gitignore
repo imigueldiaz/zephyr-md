@@ -50,6 +50,10 @@ content/drafts/
 content/private/
 content/media/private/
 
+# Docker
+.docker
+docker-compose.override.yml
+
 # Temporary files
 *.tmp
 *.temp
