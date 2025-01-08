@@ -1,6 +1,6 @@
 {
   "name": "zephyr-md",
-  "version": "v0.1.1-alpha",
+  "version": "0.1.1",
   "description": "A lightning-fast, zero-config TypeScript blog engine that turns Markdown into static HTML. No database, no complexity.",
   "main": "index.js",
   "repository": "https://github.com/imigueldiaz/zephyr-md.git",
