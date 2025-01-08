@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker
 
 on:
   push:
@@ -8,57 +8,84 @@ on:
     branches: [ "main" ]
 
 env:
-  GHCR_REGISTRY: ghcr.io
-  DOCKERHUB_REGISTRY: docker.io
+  REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  DOCKER_HUB_REPOSITORY: imigueldiaz/zephyr-md
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+      id-token: write # Necesario para firmar la imagen
+      security-events: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.3.0
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log into registry ${{ env.REGISTRY }}
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.GHCR_REGISTRY }}
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to Docker Hub
+      - name: Log into Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.DOCKERHUB_REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata for Docker
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.GHCR_REGISTRY }}/${{ env.IMAGE_NAME }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/zephyr-md
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ env.DOCKER_HUB_REPOSITORY }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
-          labels: |
-            org.opencontainers.image.title=Zephyr MD
-            org.opencontainers.image.description=A lightning-fast, zero-config TypeScript blog engine
-            org.opencontainers.image.version=alpha
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
+        id: build-and-push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true # Habilita la generación de provenance
+          sbom: true # Genera SBOM
+
+      - name: Sign the images with GitHub OIDC Token
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          echo "${TAGS}" | tr ',' '\n' | while read -r tag; do
+            cosign sign --yes "${tag}@${DIGEST}"
+          done
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
