@@ -122,7 +122,7 @@ docker run -d \
   -p 8585:3000 \
   -v ./content:/app/content \
   --name zephyr-md \
-  imigueldiaz/zephyr-md:latest
+  ghcr.io/imigueldiaz/zephyr-md:latest
 ```
 
 ### Using Docker Compose
@@ -134,7 +134,7 @@ For a more complete setup, use Docker Compose:
 ```yaml
 services:
   app:
-    image: imigueldiaz/zephyr-md:latest
+    image: ghcr.io/imigueldiaz/zephyr-md:latest
     ports:
       - "8585:3000"
     volumes:
@@ -173,13 +173,12 @@ docker-compose up -d
 ### Available Tags
 
 - `latest`: Latest stable release from main branch
-- `vX.Y.Z`: Specific version releases (e.g., `v0.1.2`)
+- `vX.Y.Z`: Specific version releases (e.g., `v0.2.0`)
 
-### Container Registries
+### Container Registry
 
-The image is available on:
-- Docker Hub: `imigueldiaz/zephyr-md`
-- GitHub Container Registry: `ghcr.io/imigueldiaz/zephyr-md`
+The image is available on GitHub Container Registry:
+- `ghcr.io/imigueldiaz/zephyr-md`
 
 ## 🛠️ Development
 
