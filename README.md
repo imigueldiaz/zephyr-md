@@ -111,6 +111,76 @@ Modify HTML templates in the `templates` directory:
 - `post.html`: Individual post template
 - `index.html`: Home page template
 
+## 🐳 Docker Support
+
+### Quick Start
+
+The easiest way to get started is using Docker. Just run:
+
+```bash
+docker run -d \
+  -p 8585:3000 \
+  -v ./content:/app/content \
+  --name zephyr-md \
+  imigueldiaz/zephyr-md:latest
+```
+
+### Using Docker Compose
+
+For a more complete setup, use Docker Compose:
+
+1. Create a `docker-compose.yml`:
+
+```yaml
+services:
+  app:
+    image: imigueldiaz/zephyr-md:latest
+    ports:
+      - "8585:3000"
+    volumes:
+      - ./content:/app/content
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+```
+
+2. Start the service:
+
+```bash
+docker-compose up -d
+```
+
+### Configuration
+
+#### Environment Variables
+
+- `NODE_ENV`: Set the Node.js environment (default: `production`)
+- `PORT`: Set the internal port (default: `3000`)
+
+#### Volumes
+
+- `/app/content`: Mount your markdown content directory here
+
+### Security Features
+
+- Non-root container user
+- Signed container images with Cosign
+- Regular security updates
+- Vulnerability scanning with Trivy
+- SBOM (Software Bill of Materials) included
+
+### Available Tags
+
+- `latest`: Latest stable release from main branch
+- `vX.Y.Z`: Specific version releases (e.g., `v0.1.2`)
+
+### Container Registries
+
+The image is available on:
+- Docker Hub: `imigueldiaz/zephyr-md`
+- GitHub Container Registry: `ghcr.io/imigueldiaz/zephyr-md`
+
 ## 🛠️ Development
 
 ### Project Structure
