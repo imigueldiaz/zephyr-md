@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/imigueldiaz/zephyr-md:v0.1.2
+    image: ghcr.io/imigueldiaz/zephyr-md:latest
     build:
       context: .
       dockerfile: Dockerfile
