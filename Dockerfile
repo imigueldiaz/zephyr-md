@@ -1,14 +1,17 @@
 FROM node:22-alpine
 
-# Instalar Yarn globalmente
-RUN npm install -g yarn
-
 WORKDIR /app
 
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+# Copiar solo package.json primero
+COPY package.json ./
 
+# Instalar dependencias
+RUN yarn install
+
+# Copiar el resto de archivos
 COPY . .
+
+# Construir la aplicación
 RUN yarn build
 
 EXPOSE 3000
