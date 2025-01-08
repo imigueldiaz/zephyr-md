@@ -2,7 +2,7 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { format, parse } from 'date-fns';
 import { BlogPost } from './types';
-import { minify } from 'html-minifier';
+import { minify } from 'html-minifier-terser';
 
 interface SiteConfig {
     site: {
@@ -50,7 +50,13 @@ export class TemplateEngine {
         removeRedundantAttributes: true,
         removeScriptTypeAttributes: true,
         removeStyleLinkTypeAttributes: true,
-        useShortDoctype: true
+        useShortDoctype: true,
+        removeEmptyAttributes: true,
+        removeOptionalTags: true,
+        collapseBooleanAttributes: true,
+        processConditionalComments: true,
+        removeEmptyElements: false, // Mantener elementos vacíos por seguridad
+        caseSensitive: true // Mantener mayúsculas/minúsculas para evitar problemas
     };
 
     constructor() {
@@ -203,7 +209,17 @@ export class TemplateEngine {
         let html = this.replaceTemplateVariables(template, processedData);
 
         // Minificar el HTML antes de devolverlo
-        return minify(html, this.minifyOptions);
+        try {
+            const originalSize = Buffer.from(html).length;
+            const minified = await minify(html, this.minifyOptions);
+            const minifiedSize = Buffer.from(minified).length;
+            const reduction = ((originalSize - minifiedSize) / originalSize * 100).toFixed(2);
+            console.log(`HTML minification: ${originalSize} -> ${minifiedSize} bytes (${reduction}% reduction)`);
+            return minified;
+        } catch (error) {
+            console.error('Error minifying HTML:', error);
+            return html; // En caso de error, devolver el HTML sin minificar
+        }
     }
 
     async renderPost(post: BlogPost): Promise<string> {
