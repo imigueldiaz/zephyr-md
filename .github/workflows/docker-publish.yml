@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write # Necesario para firmar la imagen
+      id-token: write
       security-events: write
 
     steps:
@@ -53,23 +53,27 @@ jobs:
             ${{ env.DOCKER_HUB_REPOSITORY }}
           tags: |
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+          labels: |
+            org.opencontainers.image.title=Zephyr MD
+            org.opencontainers.image.description=A lightning-fast, zero-config TypeScript blog engine
+            org.opencontainers.image.version=${{ github.ref_name }}
 
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          provenance: true # Habilita la generación de provenance
-          sbom: true # Genera SBOM
+          provenance: true
+          sbom: true
 
       - name: Sign the images with GitHub OIDC Token
+        if: github.event_name != 'pull_request'
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
           TAGS: ${{ steps.meta.outputs.tags }}
