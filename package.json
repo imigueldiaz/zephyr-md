@@ -1,6 +1,6 @@
 {
   "name": "zephyr-md",
-  "version": "0.1.1-alpha",
+  "version": "v0.1.1-alpha",
   "description": "A lightning-fast, zero-config TypeScript blog engine that turns Markdown into static HTML. No database, no complexity.",
   "main": "index.js",
   "repository": "https://github.com/imigueldiaz/zephyr-md.git",
@@ -17,6 +17,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
+    "cross-spawn": "^7.0.5",
     "date-fns": "^4.1.0",
     "express": "^4.21.2",
     "gray-matter": "^4.0.3",
