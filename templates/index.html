@@ -1,0 +1,14 @@
+<div class="posts-list">
+    <h1>Blog Posts</h1>
+    {{#each posts}}
+    <article class="post-preview">
+        <h2><a href="/posts/{{slug}}">{{title}}</a></h2>
+        <div class="post-meta">
+            <time datetime="{{date}}">{{date_formatted}}</time>
+        </div>
+        {{#if excerpt}}
+        <p class="post-excerpt">{{excerpt}}</p>
+        {{/if}}
+    </article>
+    {{/each}}
+</div>

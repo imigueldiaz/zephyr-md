@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{siteDescription}}">
+    <meta name="author" content="{{author.name}}">
+    <title>{{siteTitle}}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    {{styles}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="/scripts/theme-switch.js" defer></script>
+</head>
+<body>
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <header role="banner">
+        <nav role="navigation" aria-label="Main navigation">
+            <h1><a href="/" class="site-title">{{siteTitle}}</a></h1>
+        </nav>
+    </header>
+
+    <main id="main-content" role="main" tabindex="-1">
+        {{content}}
+    </main>
+
+    <footer role="contentinfo">
+        <p>&copy; {{year}} <a href="{{blog.license.url}}">{{blog.license.name}}</a>. Built with <a href="{{site.social.github}}">Zephyr MD</a> by <a href="{{author.url}}">{{author.name}}</a>.</p>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <script src="/scripts/copy-code.js"></script>
+</body>
+</html>

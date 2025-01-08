@@ -1,0 +1,271 @@
+/* Estilos base para bloques de código */
+pre {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.2em;
+    margin: 1.5em 0;
+    overflow-x: auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+}
+
+.dark-mode pre {
+    background: #1e1e1e;
+    border: 1px solid #2d2d2d;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+code {
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.95em;
+    line-height: 1.5;
+    font-feature-settings: "liga" 0;
+    font-weight: 400;
+}
+
+/* Estilos para código en línea */
+:not(pre) > code {
+    background: rgba(175, 184, 193, 0.15);
+    padding: 0.2em 0.4em;
+    border-radius: 6px;
+    color: #0550ae;
+    font-size: 0.85em;
+    white-space: break-spaces;
+    word-wrap: break-word;
+}
+
+.dark-mode :not(pre) > code {
+    background: rgba(110, 118, 129, 0.4);
+    color: #58a6ff;
+}
+
+/* Estilos para bloques de código */
+.hljs {
+    color: #d4d4d4;
+    text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+    font-family: 'Fira Code', 'Consolas', monospace;
+    direction: ltr;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    line-height: 1.5;
+    tab-size: 4;
+    hyphens: none;
+}
+
+/* Tokens */
+.hljs-keyword {
+    color: #569cd6;
+    font-weight: bold;
+}
+
+.hljs-built_in {
+    color: #4ec9b0;
+}
+
+.hljs-type {
+    color: #4ec9b0;
+}
+
+.hljs-literal {
+    color: #36acaa;
+}
+
+.hljs-number {
+    color: #b5cea8;
+}
+
+.hljs-regexp {
+    color: #d16969;
+}
+
+.hljs-string {
+    color: #ce9178;
+}
+
+.hljs-subst {
+    color: #e6c07b;
+}
+
+.hljs-symbol {
+    color: #b5cea8;
+}
+
+.hljs-class {
+    color: #4ec9b0;
+}
+
+.hljs-function {
+    color: #dcdcaa;
+}
+
+.hljs-title {
+    color: #dcdcaa;
+    font-weight: normal;
+}
+
+.hljs-params {
+    color: #9cdcfe;
+}
+
+.hljs-comment {
+    color: #6a9955;
+    font-style: italic;
+}
+
+.hljs-doctag {
+    color: #608b4e;
+}
+
+.hljs-meta,
+.hljs-meta .hljs-keyword {
+    color: #9cdcfe;
+}
+
+.hljs-meta .hljs-string {
+    color: #ce9178;
+}
+
+.hljs-attr {
+    color: #9cdcfe;
+}
+
+.hljs-attribute {
+    color: #ce9178;
+}
+
+.hljs-name {
+    color: #569cd6;
+}
+
+.hljs-section {
+    color: #dcdcaa;
+}
+
+.hljs-tag {
+    color: #569cd6;
+}
+
+.hljs-variable {
+    color: #9cdcfe;
+}
+
+.hljs-template-variable {
+    color: #9cdcfe;
+}
+
+.hljs-template-tag {
+    color: #569cd6;
+}
+
+/* Lenguajes específicos */
+.language-typescript .hljs-keyword,
+.language-javascript .hljs-keyword {
+    color: #569cd6;
+}
+
+.language-python .hljs-keyword {
+    color: #ff79c6;
+}
+
+.language-python .hljs-built_in {
+    color: #50fa7b;
+}
+
+.language-bash .hljs-built_in {
+    color: #50fa7b;
+}
+
+.language-r .hljs-keyword {
+    color: #bd93f9;
+}
+
+/* Mejoras de legibilidad */
+pre::-webkit-scrollbar {
+    height: 8px;
+    background-color: #1e1e1e;
+}
+
+pre::-webkit-scrollbar-thumb {
+    background-color: #424242;
+    border-radius: 4px;
+}
+
+pre::-webkit-scrollbar-thumb:hover {
+    background-color: #525252;
+}
+
+/* Estilos para líneas de código largas */
+.hljs {
+    word-wrap: normal;
+    max-width: 100%;
+}
+
+/* Estilos para el contenedor del código y botón de copiar */
+.code-block-wrapper {
+    position: relative;
+    margin: 1.5em 0;
+}
+
+.copy-code-button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.code-block-wrapper:hover .copy-code-button {
+    opacity: 1;
+}
+
+.copy-code-button:hover {
+    background: var(--border-color);
+}
+
+.copy-code-button.copied {
+    background: var(--link-color);
+    color: var(--bg-color);
+}
+
+/* Soporte para reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+    .copy-code-button {
+        transition: none;
+    }
+}
+
+/* Ajustes para dispositivos táctiles */
+@media (hover: none) {
+    .copy-code-button {
+        opacity: 1;
+        top: -0.5rem;
+        right: -0.5rem;
+        padding: 0.75rem;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+    }
+}
+
+@media (max-width: 768px) {
+    pre {
+        margin: 1em -1em;
+        border-radius: 0;
+        padding: 1em;
+    }
+    
+    code {
+        font-size: 0.85em;
+    }
+}

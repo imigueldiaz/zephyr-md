@@ -1,0 +1,27 @@
+{
+    "site": {
+        "title": "Zephyr MD",
+        "description": "A modern, accessible static blog generator",
+        "author": {
+            "name": "Ignacio de Miguel Diaz",
+            "email": "imigueldiaz@gmailcom",
+            "url": "https://blog.imigueldiaz.dev"
+        },
+        "social": {
+            "github": "https://github.com/imigueldiaz/zephyr-md",
+            "twitter": "https://twitter.com/imigueldiazdev"
+        }
+    },
+    "blog": {
+        "postsPerPage": 10,
+        "dateFormat": "dd/MM/yyyy HH:mm",
+        "license": {
+            "name": "MIT License",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "theme": {
+        "defaultMode": "auto",
+        "accentColor": "#2563eb"
+    }
+}
