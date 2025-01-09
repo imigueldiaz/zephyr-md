@@ -1,7 +1,7 @@
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { minify } from 'html-minifier';
+import { minify } from 'html-minifier-terser';
 import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 
