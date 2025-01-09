@@ -49,7 +49,7 @@ export class TemplateEngine {
     private minifyOptions = {
         collapseWhitespace: true,
         removeComments: true,
-        minifyCSS: true,
+        minifyCSS: false,
         minifyJS: true
     };
 
@@ -144,15 +144,9 @@ export class TemplateEngine {
         siteBannerLight = siteBannerLight || siteBanner;
         siteBannerDark = siteBannerDark || siteBanner;
 
-        const baseCSS = readFileSync(join(__dirname, '../templates/default/css/base.css'), 'utf8');
-        const codeCSS = readFileSync(join(__dirname, '../templates/default/css/code.css'), 'utf8');
-        const postCSS = readFileSync(join(__dirname, '../templates/default/css/post.css'), 'utf8');
-
         const data = {
             year: currentYear,
-            baseCSS: `<style>${baseCSS}</style>`,
-            codeCSS: `<style>${codeCSS}</style>`,
-            postCSS: `<style>${postCSS}</style>`,
+            baseCSS: this.generateCssLinks(),
             siteBanner,
             siteBannerLight,
             siteBannerDark,
@@ -175,30 +169,11 @@ export class TemplateEngine {
     }
 
     private generateCssLinks(): string {
-        return Array.from(this.cssFiles)
-            .map(file => `<link rel="stylesheet" href="/css/${this.config.site.siteTheme}/css/${file}">`)
-            .join('\n');
-    }
-
-    private getTemplateData(processedContent: string): TemplateData {
-        const currentYear = new Date().getFullYear();
-        const siteBanner = this.config.site.banner;
-        const siteBannerLight = this.config.site['banner-light'];
-        const siteBannerDark = this.config.site['banner-dark'];
-
-        const data = {
-            year: currentYear,
-            baseCSS: this.generateCssLinks(),
-            codeCSS: this.generateCssLinks(),
-            siteBanner,
-            siteBannerLight,
-            siteBannerDark,
-            site: this.config.site,
-            content: processedContent,
-            blog: this.config.blog
-        };
-
-        return data;
+        const cssFiles = Array.from(this.cssFiles);
+        const links = cssFiles.map(file => 
+            `<link rel="stylesheet" href="/css/${this.config.site.siteTheme}/css/${file}">`
+        );
+        return links.join('\n');
     }
 
     clearCache(): void {

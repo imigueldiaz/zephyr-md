@@ -29,11 +29,12 @@ export async function initialize() {
     }
   }
 
+  const config: Config = await loadConfig();
   const app = express();
   const port = process.env.PORT ? parseInt(process.env.PORT) : 8585;
   const host = process.env.HOST || 'localhost';
   const contentDir = join(__dirname, '../content');
-  const themeFolder = 'default';
+  const themeFolder = config.site.siteTheme;
 
   // Serve static files
   app.use('/public', express.static(join(__dirname, '../public')));
@@ -44,7 +45,8 @@ export async function initialize() {
   console.log('Static paths:', {
     public: join(__dirname, '../public'),
     css: join(__dirname, '../templates'),
-    scripts: join(__dirname, '../templates')
+    scripts: join(__dirname, '../templates'),
+    theme: config.site.siteTheme
   });
 
   // Add security headers with helmet
@@ -94,7 +96,6 @@ export async function initialize() {
   app.use(limiter);
 
   // Initialize services
-  const config: Config = await loadConfig();
   const markdownProcessor = new MarkdownProcessor(contentDir);
   const templateEngine = new TemplateEngine(config);
 
@@ -108,7 +109,6 @@ export async function initialize() {
   app.get('/', async (req, res) => {
     try {
       const posts = await markdownProcessor.getAllPosts();
-      console.log('Posts for index:', posts);
       const html = await templateEngine.renderIndex(posts);
       res.send(html);
     } catch (error) {
@@ -126,7 +126,6 @@ export async function initialize() {
         return;
       }
       
-      console.log('Rendering post:', post);
       templateEngine.addCssFile(`/css/${themeFolder}/css/post.css`);
       const html = await templateEngine.renderPost(post);
       res.send(html);

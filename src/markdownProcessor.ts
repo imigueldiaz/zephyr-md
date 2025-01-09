@@ -135,8 +135,6 @@ export class MarkdownProcessor {
                 throw new Error('Failed to process markdown content');
             }
 
-            console.log('Generated HTML sample:', htmlContent.substring(0, 500));
-
             // Crear el post con los metadatos y el contenido
             const post = this.processMetadata(data);
             post.content = htmlContent;
@@ -156,12 +154,7 @@ export class MarkdownProcessor {
                 .split(',')
                 .map(l => l.trim())
                 .filter(l => l.length > 0);
-            console.log('Processing labels:', {
-                raw: metadata.labels,
-                split: metadata.labels.split(','),
-                trimmed: metadata.labels.split(',').map(l => l.trim()),
-                filtered: labels
-            });
+           
         }
 
         return {
