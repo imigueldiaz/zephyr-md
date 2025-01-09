@@ -2,6 +2,10 @@
 
 <div align="center">
 
+<p align="center">
+  <img src="public/images/zephir-md.jpg" alt="Zephyr MD" width="100%">
+</p>
+
 [![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
