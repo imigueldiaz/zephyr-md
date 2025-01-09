@@ -1,5 +1,5 @@
 import { readFile, readdir } from 'fs/promises';
-import { join } from 'path';
+import { join, normalize, isAbsolute, relative } from 'path';
 import matter from 'gray-matter';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
@@ -48,7 +48,6 @@ export class MarkdownProcessor {
 
     async getPost(slug: string): Promise<BlogPost | null> {
         try {
-            console.log('Getting post with slug:', slug);
             const filePath = join(this.postsDir, `${slug}.md`);
             return await this.processMarkdownFile(filePath);
         } catch (error) {
@@ -60,8 +59,6 @@ export class MarkdownProcessor {
     async getAllPosts(): Promise<BlogPost[]> {
         try {
             const files = await readdir(this.postsDir);
-            console.log('Found post files:', files);
-
             const posts = await Promise.all(
                 files
                     .filter(file => file.endsWith('.md'))
@@ -71,7 +68,6 @@ export class MarkdownProcessor {
                     })
             );
 
-            console.log('Processed posts:', posts);
             return posts.filter((post): post is BlogPost => post !== null);
         } catch (error) {
             console.error('Error getting all posts:', error);
@@ -79,10 +75,28 @@ export class MarkdownProcessor {
         }
     }
 
+    private sanitizePath(filePath: string): string {
+        // Normalize the path and ensure it's within contentDir
+        const normalizedPath = normalize(filePath);
+        const absolutePath = isAbsolute(normalizedPath) 
+            ? normalizedPath 
+            : join(this.contentDir, normalizedPath);
+        
+        // Check if the path is trying to escape contentDir
+        const relativePath = relative(this.contentDir, absolutePath);
+        if (relativePath.startsWith('..') || isAbsolute(relativePath)) {
+            throw new Error('Invalid file path: Attempting to access files outside content directory');
+        }
+        
+        return absolutePath;
+    }
+
     async processMarkdownFile(filePath: string): Promise<BlogPost> {
         try {
-            console.log('Processing markdown file:', filePath);
-            const fileContent = await readFile(filePath, 'utf-8');
+            // Sanitize the file path
+            const safePath = this.sanitizePath(filePath);
+            
+            const fileContent = await readFile(safePath, 'utf-8');
             const { data, content } = matter(fileContent) as GrayMatterFile;
             
             // Configurar marked para el resaltado de código

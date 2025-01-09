@@ -22,7 +22,6 @@ export async function initialize() {
       const configPath = join(__dirname, '../config.json');
       const configContent = await readFile(configPath, 'utf-8');
       const config = JSON.parse(configContent);
-      console.log('Loaded config:', JSON.stringify(config, null, 2));
       return config;
     } catch (error) {
       console.error('Error loading config:', error);

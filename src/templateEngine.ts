@@ -78,11 +78,9 @@ export class TemplateEngine {
 
     async renderTemplate(name: string, data: TemplateData = {}): Promise<string> {
         try {
-            console.log(`Rendering template ${name} with data:`, data);
             const template = await this.loadTemplate(name);
             const commonData = await this.getCommonData();
             const mergedData = { ...commonData, ...data };
-            console.log('Final template data:', JSON.stringify(mergedData, null, 2));
             
             // If it's a post or index template, wrap it in the base template
             if (name === 'post' || name === 'index') {
@@ -92,12 +90,12 @@ export class TemplateEngine {
                     ...mergedData,
                     content
                 });
-                return minify(result, this.minifyOptions);
+                return await this.minifyHtml(result);
             }
 
             // For other templates, just render them directly
             const result = template(mergedData);
-            return minify(result, this.minifyOptions);
+            return await this.minifyHtml(result);
         } catch (error) {
             console.error(`Error rendering template ${name}:`, error);
             throw error;
@@ -116,7 +114,6 @@ export class TemplateEngine {
         // Helper function to check file existence
         const checkBannerExists = (baseName: string, ext: string): string | null => {
             const bannerPath = join(__dirname, `../public/images/${baseName}.${ext}`);
-            console.log('Checking for banner at:', bannerPath);
             return existsSync(bannerPath) ? `/public/images/${baseName}.${ext}` : null;
         };
 
@@ -164,8 +161,17 @@ export class TemplateEngine {
             theme: this.config.theme
         };
 
-        console.log('Common data:', JSON.stringify(data, null, 2));
         return data;
+    }
+
+    private async minifyHtml(template: string): Promise<string> {
+        try {
+            const minified = await minify(template, this.minifyOptions);
+            return minified;
+        } catch (error) {
+            console.error('Error minifying HTML:', error);
+            return template;
+        }
     }
 
     private generateCssLinks(): string {
@@ -211,7 +217,6 @@ export class TemplateEngine {
     }
 
     async renderPost(post: BlogPost): Promise<string> {
-        console.log('Rendering post with data:', JSON.stringify(post, null, 2));
         const data = {
             post: {
                 ...post,
@@ -219,15 +224,12 @@ export class TemplateEngine {
                 language: post.language ? this.getLanguageDisplay(post.language) : null
             }
         };
-        console.log('Template data:', JSON.stringify(data, null, 2));
         return this.renderTemplate('post', data);
     }
 
     async renderIndex(posts: BlogPost[]): Promise<string> {
-        console.log('Rendering index with posts:', posts);
         const data = {
             posts: posts.map(post => {
-                console.log('Processing post for index:', post);
                 return {
                     title: post.title,
                     slug: post.slug,
