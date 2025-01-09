@@ -38,14 +38,14 @@ export async function initialize() {
 
   // Serve static files
   app.use('/public', express.static(join(__dirname, '../public')));
-  app.use('/css', express.static(join(__dirname, '../templates')));
-  app.use('/scripts', express.static(join(__dirname, '../templates')));
+  app.use('/styles', express.static(join(__dirname, '../templates', themeFolder, 'css')));
+  app.use('/scripts', express.static(join(__dirname, '../templates', themeFolder, 'scripts')));
 
   // Log static file paths for debugging
   console.log('Static paths:', {
     public: join(__dirname, '../public'),
-    css: join(__dirname, '../templates'),
-    scripts: join(__dirname, '../templates'),
+    styles: join(__dirname, '../templates', themeFolder, 'css'),
+    scripts: join(__dirname, '../templates', themeFolder, 'js'),
     theme: config.site.siteTheme
   });
 
@@ -101,8 +101,8 @@ export async function initialize() {
 
   // Middleware para añadir CSS común a todas las páginas
   app.use((req, res, next) => {
-    templateEngine.addCssFile(`/css/${themeFolder}/css/base.css`);
-    templateEngine.addCssFile(`/css/${themeFolder}/css/code.css`);
+    templateEngine.addCssFile(`/styles/${themeFolder}/css/base.css`);
+    templateEngine.addCssFile(`/styles/${themeFolder}/css/code.css`);
     next();
   });
 
@@ -126,7 +126,6 @@ export async function initialize() {
         return;
       }
       
-      templateEngine.addCssFile(`/css/${themeFolder}/css/post.css`);
       const html = await templateEngine.renderPost(post);
       res.send(html);
     } catch (error) {

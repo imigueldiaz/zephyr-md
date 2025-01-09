@@ -146,7 +146,6 @@ export class TemplateEngine {
 
         const data = {
             year: currentYear,
-            baseCSS: this.generateCssLinks(),
             siteBanner,
             siteBannerLight,
             siteBannerDark,
@@ -166,14 +165,6 @@ export class TemplateEngine {
             console.error('Error minifying HTML:', error);
             return template;
         }
-    }
-
-    private generateCssLinks(): string {
-        const cssFiles = Array.from(this.cssFiles);
-        const links = cssFiles.map(file => 
-            `<link rel="stylesheet" href="/css/${this.config.site.siteTheme}/css/${file}">`
-        );
-        return links.join('\n');
     }
 
     clearCache(): void {
