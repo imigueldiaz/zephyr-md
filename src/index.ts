@@ -30,7 +30,8 @@ export async function initialize() {
   }
 
   const app = express();
-  const port = 3000;
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 8585;
+  const host = process.env.HOST || 'localhost';
   const contentDir = join(__dirname, '../content');
   const themeFolder = 'default';
 
@@ -136,7 +137,7 @@ export async function initialize() {
   });
 
   app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+    console.log(`Server running at http://${host}:${port}`);
   });
 
   return app;
