@@ -5,10 +5,12 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8585:3000"
+      - "8585:8585"
     volumes:
       - ./content:/app/content
+      - ./public:/app/public
+      - ./templates:/app/templates
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=8585
     restart: unless-stopped

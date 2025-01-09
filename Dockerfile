@@ -14,6 +14,10 @@ RUN yarn install
 # Copiar el resto de archivos
 COPY . .
 
+# Crear directorios necesarios
+RUN mkdir -p /app/content /app/public /app/templates/default
+RUN chown -R appuser:appgroup /app/content /app/public /app/templates/default
+
 # Construir la aplicación
 RUN yarn build
 
@@ -23,6 +27,10 @@ RUN chown -R appuser:appgroup /app
 # Cambiar al usuario no-root
 USER appuser
 
-EXPOSE 3000
+# Exponer el puerto que usa la aplicación
+EXPOSE 8585
+
+# Configurar volúmenes para contenido y archivos públicos
+VOLUME ["/app/content", "/app/public"]
 
 CMD ["yarn", "start"]

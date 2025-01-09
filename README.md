@@ -192,6 +192,38 @@ Creating a new theme from scratch can be challenging due to the complexity of th
 4. Use browser dev tools to understand the existing styles
 5. Document your changes for future maintenance
 
+## Docker
+
+You can run Zephyr MD using Docker:
+
+```bash
+# Build the image
+docker build -t zephyr-md .
+
+# Run the container
+docker run -d \
+  -p 8585:8585 \
+  -v $(pwd)/content:/app/content \
+  -v $(pwd)/public:/app/public \
+  --name zephyr-md \
+  zephyr-md
+```
+
+The container exposes port 8585 and uses two volumes:
+- `/app/content`: For your markdown files
+- `/app/public`: For static files (images, css, etc)
+
+You can customize the theme by mounting the templates directory:
+```bash
+docker run -d \
+  -p 8585:8585 \
+  -v $(pwd)/content:/app/content \
+  -v $(pwd)/public:/app/public \
+  -v $(pwd)/templates:/app/templates \
+  --name zephyr-md \
+  zephyr-md
+```
+
 ## 🐳 Docker Support
 
 ### Quick Start
