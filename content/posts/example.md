@@ -2,6 +2,7 @@
 title: Creando Contenido con Zephyr MD
 date: 2024-01-08
 excerpt: Descubre cómo Zephyr MD puede potenciar tu blog técnico, científico o literario
+labels: markdown, blog, documentación, tutorial
 ---
 
 # Creando Contenido con Zephyr MD
@@ -26,7 +27,7 @@ sudo apt install -y \
     software-properties-common
 ```
 
-> 💡 **Tip**: Asegúrate de tener privilegios de administrador antes de ejecutar estos comandos.
+> **Tip**: Asegúrate de tener privilegios de administrador antes de ejecutar estos comandos.
 
 ### Arquitectura del Sistema
 

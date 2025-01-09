@@ -1,0 +1,39 @@
+<article class="blog-post">
+    <header>
+        <h1>{{post.title}}</h1>
+        <div class="post-metadata">
+            <time datetime="{{post.date}}">{{post.date}}</time>
+            {{#if post.language}}
+            <span class="post-language" title="{{post.language.name}}">{{post.language.flag}}</span>
+            {{/if}}
+        </div>
+        {{#if post.labels.length}}
+        <div class="post-labels">
+            {{#each post.labels}}
+            <a href="/tags/{{this}}" class="post-label">{{this}}</a>
+            {{/each}}
+        </div>
+        {{/if}}
+    </header>
+
+    <div class="post-content">
+        {{{post.content}}}
+    </div>
+
+    <footer class="post-footer">
+        <div class="post-navigation">
+            {{#if previousPost}}
+            <a href="/posts/{{previousPost.slug}}" class="post-nav-link post-nav-prev">
+                <span class="post-nav-label">Previous</span>
+                <span class="post-nav-title">{{previousPost.title}}</span>
+            </a>
+            {{/if}}
+            {{#if nextPost}}
+            <a href="/posts/{{nextPost.slug}}" class="post-nav-link post-nav-next">
+                <span class="post-nav-label">Next</span>
+                <span class="post-nav-title">{{nextPost.title}}</span>
+            </a>
+            {{/if}}
+        </div>
+    </footer>
+</article>

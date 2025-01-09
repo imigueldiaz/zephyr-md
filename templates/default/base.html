@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="{{site.language}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{site.description}}">
+    <meta name="author" content="{{site.author.name}}">
+    <title>{{site.title}}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="196x196" href="/public/images/favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/public/images/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/public/images/apple-touch-icon.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    {{{baseCSS}}}
+    {{{codeCSS}}}
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Scripts -->
+    <script src="/scripts/{{site.siteTheme}}/scripts/theme-switch.js" defer></script>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header role="banner">
+        <nav role="navigation" aria-label="Main navigation">
+            <h1 class="site-title">
+                {{#if siteBanner}}
+                <a href="/" aria-label="{{site.title}}">
+                    {{#if siteBannerLight}}
+                    <img src="{{siteBannerLight}}" alt="{{site.title}}" class="site-banner light-mode">
+                    {{/if}}
+                    {{#if siteBannerDark}}
+                    <img src="{{siteBannerDark}}" alt="{{site.title}}" class="site-banner dark-mode">
+                    {{/if}} 
+                </a>
+                {{else}}
+                <a href="/">{{site.title}}</a>
+                {{/if}}
+            </h1>
+        </nav>
+    </header>
+
+    <main id="main-content" role="main" tabindex="-1">
+        {{{content}}}
+    </main>
+
+    <footer role="contentinfo" class="site-footer">
+        <p>&copy; {{year}} {{site.author.name}}{{#if blog.license}} · <a href="{{blog.license.url}}" target="_blank" rel="license">{{blog.license.name}}</a>{{/if}}</p>
+    </footer>
+    
+    <a href="#" class="back-to-top" aria-label="Back to top">↑</a>
+    
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        // Initialize highlight.js with line numbers
+        document.querySelectorAll('pre code').forEach((block) => {
+            // Add line numbers
+            const lines = block.textContent.split('\n');
+            block.innerHTML = lines.map((line, index) => 
+                `<span class="line">${line}</span>`
+            ).join('\n');
+            
+            // Apply syntax highlighting
+            hljs.configure({
+                ignoreUnescapedHTML: true
+            });
+            hljs.highlightElement(block);
+        });
+        
+        // Back to top visibility
+        const backToTop = document.querySelector('.back-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+        
+        // Smooth scroll behavior
+        document.documentElement.style.scrollBehavior = 'smooth';
+    </script>
+</body>
+</html>

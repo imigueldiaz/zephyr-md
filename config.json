@@ -3,6 +3,7 @@
         "title": "Zephyr MD",
         "description": "A modern, accessible static blog generator",
         "language": "es",
+        "siteTheme": "default",
         "author": {
             "name": "Ignacio de Miguel Diaz",
             "email": "imigueldiaz@gmailcom",

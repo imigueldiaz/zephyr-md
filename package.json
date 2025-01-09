@@ -17,11 +17,17 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
+    "@types/helmet": "4.0.0",
+    "@types/html-minifier": "4.0.5",
     "cross-spawn": "^7.0.5",
     "date-fns": "^4.1.0",
     "express": "^4.21.2",
+    "express-rate-limit": "7.5.0",
     "gray-matter": "^4.0.3",
+    "handlebars": "4.7.8",
+    "helmet": "8.0.0",
     "highlight.js": "^11.11.1",
+    "html-minifier": "4.0.0",
     "html-minifier-terser": "7.2.0",
     "marked": "^15.0.6"
   },

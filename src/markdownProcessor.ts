@@ -1,22 +1,33 @@
 import { readFile, readdir } from 'fs/promises';
 import { join } from 'path';
-import { marked } from 'marked';
 import matter from 'gray-matter';
-import { BlogPost, PostMetadata, GrayMatterFile } from './types';
+import { marked } from 'marked';
 import hljs from 'highlight.js';
+import type { Renderer, Tokens } from 'marked';
 
-// Extender las opciones de marked para incluir todas las propiedades necesarias
-declare module 'marked' {
-    interface MarkedOptions {
-        highlight?: (code: string, lang: string) => string;
-        langPrefix?: string;
-        breaks?: boolean;
-        gfm?: boolean;
-        headerIds?: boolean;
-        mangle?: boolean;
-        pedantic?: boolean;
-        sanitize?: boolean;
-    }
+interface BlogPost {
+    title: string;
+    date: string;
+    content: string;
+    excerpt: string;
+    slug: string;
+    language: string;
+    labels: string[];
+    rawLabels: string;
+}
+
+interface PostMetadata {
+    title?: string;
+    date?: string;
+    excerpt?: string;
+    language?: string;
+    labels?: string;
+    [key: string]: any;
+}
+
+interface GrayMatterFile {
+    data: PostMetadata;
+    content: string;
 }
 
 export class MarkdownProcessor {
@@ -27,80 +38,132 @@ export class MarkdownProcessor {
         this.contentDir = contentDir || join(__dirname, '../content');
         this.postsDir = join(this.contentDir, 'posts');
 
-        // Configurar marked para usar highlight.js y otras opciones
+        // Configurar marked globalmente
         marked.setOptions({
-            highlight: (code: string, lang: string) => {
-                if (lang && hljs.getLanguage(lang)) {
-                    try {
-                        return hljs.highlight(code, { 
-                            language: lang,
-                            ignoreIllegals: true 
-                        }).value;
-                    } catch (e) {
-                        console.error('Error highlighting code:', e);
-                    }
-                }
-                return hljs.highlightAuto(code).value;
-            },
-            langPrefix: 'hljs language-',
-            breaks: false,         // Los párrafos se separan por líneas en blanco
-            gfm: true,             // GitHub Flavored Markdown
-            headerIds: true,       // Añade IDs a los encabezados
-            mangle: false,         // No modifica los IDs de los encabezados
-            pedantic: false,       // No es estricto con el markdown original
-            sanitize: false        // Permite HTML en el input
+            gfm: true,
+            breaks: false,
+            pedantic: false
         });
     }
 
     async getPost(slug: string): Promise<BlogPost | null> {
         try {
-            const posts = await this.getAllPosts();
-            return posts.find(post => post.slug === slug) || null;
+            console.log('Getting post with slug:', slug);
+            const filePath = join(this.postsDir, `${slug}.md`);
+            return await this.processMarkdownFile(filePath);
         } catch (error) {
-            console.error(`Error getting post ${slug}:`, error);
+            console.error('Error getting post:', error);
             return null;
         }
-    }
-
-    private parseMarkdown(content: string): string {
-        return marked.parse(content, { async: false }) as string;
     }
 
     async getAllPosts(): Promise<BlogPost[]> {
         try {
             const files = await readdir(this.postsDir);
-            const markdownFiles = files.filter(file => file.endsWith('.md'));
+            console.log('Found post files:', files);
 
             const posts = await Promise.all(
-                markdownFiles.map(async file => {
-                    const filePath = join(this.postsDir, file);
-                    const content = await readFile(filePath, 'utf-8');
-                    const result = matter(content) as GrayMatterFile<PostMetadata>;
-
-                    if (!result.data.title || !result.data.date) {
-                        throw new Error(`Missing required frontmatter in ${file}`);
-                    }
-
-                    // Usar el método parseMarkdown que garantiza devolver una string
-                    const htmlContent = this.parseMarkdown(result.content);
-                    const slug = file.replace('.md', '');
-
-                    return {
-                        title: result.data.title,
-                        date: result.data.date,
-                        content: htmlContent,
-                        excerpt: result.data.excerpt,
-                        slug
-                    };
-                })
+                files
+                    .filter(file => file.endsWith('.md'))
+                    .map(async file => {
+                        const slug = file.replace('.md', '');
+                        return this.getPost(slug);
+                    })
             );
 
-            return posts.sort((a, b) => 
-                new Date(b.date).getTime() - new Date(a.date).getTime()
-            );
+            console.log('Processed posts:', posts);
+            return posts.filter((post): post is BlogPost => post !== null);
         } catch (error) {
-            console.error('Error getting posts:', error);
+            console.error('Error getting all posts:', error);
             return [];
         }
+    }
+
+    async processMarkdownFile(filePath: string): Promise<BlogPost> {
+        try {
+            console.log('Processing markdown file:', filePath);
+            const fileContent = await readFile(filePath, 'utf-8');
+            const { data, content } = matter(fileContent) as GrayMatterFile;
+            
+            // Configurar marked para el resaltado de código
+            const renderer = new marked.Renderer();
+            renderer.code = function(this: Renderer, { text, lang }: Tokens.Code): string {
+                const language = lang || 'plaintext';
+                try {
+                    if (language && hljs.getLanguage(language)) {
+                        const highlighted = hljs.highlight(text, { language }).value;
+                        return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`;
+                    }
+                    return `<pre><code class="hljs">${hljs.highlightAuto(text).value}</code></pre>`;
+                } catch (error) {
+                    console.error('Error highlighting code:', error);
+                    return `<pre><code class="hljs">${hljs.highlightAuto(text).value}</code></pre>`;
+                }
+            };
+
+            // Remove first H1 if it matches the frontmatter title
+            const lines = content.split('\n');
+            const titlePattern = new RegExp(`^#\\s*${data.title}\\s*$`);
+            const firstH1Index = lines.findIndex(line => titlePattern.test(line));
+            if (firstH1Index !== -1) {
+                lines.splice(firstH1Index, 1);
+            }
+            const processedContent = lines.join('\n');
+
+            // Procesar el contenido markdown a HTML
+            let htmlContent = marked.parse(processedContent, { renderer });
+            // Si es una Promise, esperar su resolución
+            if (htmlContent instanceof Promise) {
+                htmlContent = await htmlContent;
+            }
+
+            if (!htmlContent) {
+                throw new Error('Failed to process markdown content');
+            }
+
+            console.log('Generated HTML sample:', htmlContent.substring(0, 500));
+
+            // Crear el post con los metadatos y el contenido
+            const post = this.processMetadata(data);
+            post.content = htmlContent;
+            post.slug = this.getSlugFromPath(filePath);
+
+            return post;
+        } catch (error) {
+            console.error('Error processing markdown file:', filePath, error);
+            throw error;
+        }
+    }
+
+    private processMetadata(metadata: PostMetadata): BlogPost {
+        let labels: string[] = [];
+        if (metadata.labels) {
+            labels = metadata.labels
+                .split(',')
+                .map(l => l.trim())
+                .filter(l => l.length > 0);
+            console.log('Processing labels:', {
+                raw: metadata.labels,
+                split: metadata.labels.split(','),
+                trimmed: metadata.labels.split(',').map(l => l.trim()),
+                filtered: labels
+            });
+        }
+
+        return {
+            title: metadata.title || 'Untitled',
+            date: metadata.date || new Date().toISOString(),
+            excerpt: metadata.excerpt || '',
+            slug: '',
+            language: metadata.language || '',
+            labels,
+            rawLabels: metadata.labels || '',
+            content: ''
+        };
+    }
+
+    private getSlugFromPath(filePath: string): string {
+        const fileName = filePath.split(/[\/\\]/).pop() || '';
+        return fileName.replace(/\.md$/, '');
     }
 }

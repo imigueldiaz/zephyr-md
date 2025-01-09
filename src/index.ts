@@ -2,28 +2,113 @@ import express from 'express';
 import { join } from 'path';
 import { TemplateEngine } from './templateEngine';
 import { MarkdownProcessor } from './markdownProcessor';
+import { Config } from './types';
+import { logger } from './logger';
+import { mkdir } from 'fs/promises';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { readFile } from 'fs/promises';
 
 export async function initialize() {
+  // Crear directorio de logs si no existe
+  try {
+    await mkdir(join(__dirname, '../logs'), { recursive: true });
+  } catch (error) {
+    console.error('Error creating logs directory:', error);
+  }
+
+  async function loadConfig(): Promise<Config> {
+    try {
+      const configPath = join(__dirname, '../config.json');
+      const configContent = await readFile(configPath, 'utf-8');
+      const config = JSON.parse(configContent);
+      console.log('Loaded config:', JSON.stringify(config, null, 2));
+      return config;
+    } catch (error) {
+      console.error('Error loading config:', error);
+      throw error;
+    }
+  }
+
   const app = express();
   const port = 3000;
+  const contentDir = join(__dirname, '../content');
+  const themeFolder = 'default';
 
-  const templateEngine = new TemplateEngine();
-  const markdownProcessor = new MarkdownProcessor();
+  // Serve static files
+  app.use('/public', express.static(join(__dirname, '../public')));
+  app.use('/css', express.static(join(__dirname, '../templates')));
+  app.use('/scripts', express.static(join(__dirname, '../templates')));
 
-  // Serve static files from templates directory
-  app.use('/css', express.static(join(__dirname, '../templates/css')));
-  app.use('/scripts', express.static(join(__dirname, '../templates/scripts')));
+  // Log static file paths for debugging
+  console.log('Static paths:', {
+    public: join(__dirname, '../public'),
+    css: join(__dirname, '../templates'),
+    scripts: join(__dirname, '../templates')
+  });
+
+  // Add security headers with helmet
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          'cdnjs.cloudflare.com'
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          'fonts.googleapis.com',
+          'cdnjs.cloudflare.com'
+        ],
+        imgSrc: ["'self'", "data:", "https:"],
+        fontSrc: ["'self'", "fonts.gstatic.com", "fonts.googleapis.com"],
+        connectSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+        childSrc: ["'none'"],
+        workerSrc: ["'none'"],
+        manifestSrc: ["'self'"],
+        formAction: ["'self'"],
+        baseUri: ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+  }));
+
+  // Add rate limiting
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // Apply rate limiting to all routes
+  app.use(limiter);
+
+  // Initialize services
+  const config: Config = await loadConfig();
+  const markdownProcessor = new MarkdownProcessor(contentDir);
+  const templateEngine = new TemplateEngine(config);
 
   // Middleware para añadir CSS común a todas las páginas
   app.use((req, res, next) => {
-    templateEngine.addCssFile('base.css');
-    templateEngine.addCssFile('code.css');
+    templateEngine.addCssFile(`/css/${themeFolder}/css/base.css`);
+    templateEngine.addCssFile(`/css/${themeFolder}/css/code.css`);
     next();
   });
 
   app.get('/', async (req, res) => {
     try {
       const posts = await markdownProcessor.getAllPosts();
+      console.log('Posts for index:', posts);
       const html = await templateEngine.renderIndex(posts);
       res.send(html);
     } catch (error) {
@@ -36,11 +121,13 @@ export async function initialize() {
     try {
       const post = await markdownProcessor.getPost(req.params.slug);
       if (!post) {
+        console.log('Post not found:', req.params.slug);
         res.status(404).send('Post not found');
         return;
       }
       
-      templateEngine.addCssFile('post.css');
+      console.log('Rendering post:', post);
+      templateEngine.addCssFile(`/css/${themeFolder}/css/post.css`);
       const html = await templateEngine.renderPost(post);
       res.send(html);
     } catch (error) {

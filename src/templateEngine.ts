@@ -1,35 +1,30 @@
 import { readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import { join } from 'path';
-import { format, parse } from 'date-fns';
-import { BlogPost } from './types';
-import { minify } from 'html-minifier-terser';
+import { minify } from 'html-minifier';
+import Handlebars from 'handlebars';
+import { readFileSync } from 'fs';
 
-interface SiteConfig {
+interface Config {
     site: {
         title: string;
         description: string;
         language: string;
-        author: {
+        siteTheme: string;
+        author?: {
             name: string;
-            email: string;
-            url: string;
         };
-        social: {
-            github: string;
-            twitter: string;
-        };
+        banner?: string;
+        'banner-light'?: string;
+        'banner-dark'?: string;
     };
-    blog: {
-        postsPerPage: number;
-        dateFormat: string;
-        license: {
-            name: string;
-            url: string;
-        };
+    blog?: {
+        postsPerPage?: number;
+        dateFormat?: string;
     };
-    theme: {
-        defaultMode: string;
-        accentColor: string;
+    theme?: {
+        syntaxHighlighting?: boolean;
+        darkMode?: boolean;
     };
 }
 
@@ -37,217 +32,251 @@ interface TemplateData {
     [key: string]: any;
 }
 
+interface BlogPost {
+    title: string;
+    slug: string;
+    date: Date | string;
+    excerpt: string;
+    language?: string;
+}
+
+type HandlebarsTemplateDelegate = (data: TemplateData) => string;
+
 export class TemplateEngine {
-    private config!: SiteConfig;
-    private templates: Map<string, string> = new Map();
+    private templateCache: Map<string, HandlebarsTemplateDelegate> = new Map();
     private cssFiles: Set<string> = new Set();
-    private readonly defaultDateFormat = 'dd/MM/yyyy HH:mm';
-    private readonly minifyOptions = {
+    private config: Config;
+    private minifyOptions = {
         collapseWhitespace: true,
         removeComments: true,
         minifyCSS: true,
-        minifyJS: true,
-        removeRedundantAttributes: true,
-        removeScriptTypeAttributes: true,
-        removeStyleLinkTypeAttributes: true,
-        useShortDoctype: true,
-        removeEmptyAttributes: true,
-        removeOptionalTags: true,
-        collapseBooleanAttributes: true,
-        processConditionalComments: true,
-        removeEmptyElements: false, // Mantener elementos vacíos por seguridad
-        caseSensitive: true // Mantener mayúsculas/minúsculas para evitar problemas
+        minifyJS: true
     };
 
-    constructor() {
-        this.loadConfig().catch(error => {
-            console.error('Failed to load config:', error);
-            throw error;
-        });
+    constructor(config: Config) {
+        this.config = config;
         this.addCssFile('base.css');
         this.addCssFile('code.css');
-    }
-
-    private async loadConfig(): Promise<void> {
-        try {
-            const configPath = join(__dirname, '../config.json');
-            const configContent = await readFile(configPath, 'utf-8');
-            this.config = JSON.parse(configContent);
-        } catch (error) {
-            console.error('Error loading config:', error);
-            throw error;
-        }
-    }
-
-    async loadTemplate(name: string): Promise<string> {
-        if (this.templates.has(name)) {
-            return this.templates.get(name)!;
-        }
-
-        const templatePath = join(__dirname, '../templates', `${name}.html`);
-        try {
-            const template = await readFile(templatePath, 'utf-8');
-            this.templates.set(name, template);
-            return template;
-        } catch (error) {
-            console.error(`Error loading template ${name}:`, error);
-            throw error;
-        }
+        this.addCssFile('post.css');
     }
 
     addCssFile(filename: string): void {
         this.cssFiles.add(filename);
     }
 
+    private async loadTemplate(name: string): Promise<HandlebarsTemplateDelegate> {
+        if (this.templateCache.has(name)) {
+            return this.templateCache.get(name)!;
+        }
+
+        const templatePath = join(__dirname, `../templates/${this.config.site.siteTheme}/${name}.html`);
+        const templateContent = await readFile(templatePath, 'utf-8');
+        const template = Handlebars.compile(templateContent);
+        this.templateCache.set(name, template);
+        return template;
+    }
+
+    async renderTemplate(name: string, data: TemplateData = {}): Promise<string> {
+        try {
+            console.log(`Rendering template ${name} with data:`, data);
+            const template = await this.loadTemplate(name);
+            const commonData = await this.getCommonData();
+            const mergedData = { ...commonData, ...data };
+            console.log('Final template data:', JSON.stringify(mergedData, null, 2));
+            
+            // If it's a post or index template, wrap it in the base template
+            if (name === 'post' || name === 'index') {
+                const content = template(mergedData);
+                const baseTemplate = await this.loadTemplate('base');
+                const result = baseTemplate({
+                    ...mergedData,
+                    content
+                });
+                return minify(result, this.minifyOptions);
+            }
+
+            // For other templates, just render them directly
+            const result = template(mergedData);
+            return minify(result, this.minifyOptions);
+        } catch (error) {
+            console.error(`Error rendering template ${name}:`, error);
+            throw error;
+        }
+    }
+
+    private async getCommonData(): Promise<TemplateData> {
+        const currentYear = new Date().getFullYear();
+        
+        // Check for banner images
+        const possibleExtensions = ['svg', 'png', 'jpg'];
+        let siteBanner: string | null = null;
+        let siteBannerLight: string | null = null;
+        let siteBannerDark: string | null = null;
+        
+        // Helper function to check file existence
+        const checkBannerExists = (baseName: string, ext: string): string | null => {
+            const bannerPath = join(__dirname, `../public/images/${baseName}.${ext}`);
+            console.log('Checking for banner at:', bannerPath);
+            return existsSync(bannerPath) ? `/public/images/${baseName}.${ext}` : null;
+        };
+
+        // Check for each extension
+        for (const ext of possibleExtensions) {
+            // Check default banner
+            if (!siteBanner) {
+                siteBanner = checkBannerExists('banner', ext);
+            }
+            
+            // Check light mode banner
+            if (!siteBannerLight) {
+                siteBannerLight = checkBannerExists('banner-light', ext);
+            }
+            
+            // Check dark mode banner
+            if (!siteBannerDark) {
+                siteBannerDark = checkBannerExists('banner-dark', ext);
+            }
+
+            // If we found all variants, break
+            if (siteBanner && siteBannerLight && siteBannerDark) {
+                break;
+            }
+        }
+
+        // If theme-specific banners aren't found, fallback to default
+        siteBannerLight = siteBannerLight || siteBanner;
+        siteBannerDark = siteBannerDark || siteBanner;
+
+        const baseCSS = readFileSync(join(__dirname, '../templates/default/css/base.css'), 'utf8');
+        const codeCSS = readFileSync(join(__dirname, '../templates/default/css/code.css'), 'utf8');
+        const postCSS = readFileSync(join(__dirname, '../templates/default/css/post.css'), 'utf8');
+
+        const data = {
+            year: currentYear,
+            baseCSS: `<style>${baseCSS}</style>`,
+            codeCSS: `<style>${codeCSS}</style>`,
+            postCSS: `<style>${postCSS}</style>`,
+            siteBanner,
+            siteBannerLight,
+            siteBannerDark,
+            site: this.config.site,
+            blog: this.config.blog,
+            theme: this.config.theme
+        };
+
+        console.log('Common data:', JSON.stringify(data, null, 2));
+        return data;
+    }
+
     private generateCssLinks(): string {
         return Array.from(this.cssFiles)
-            .map(file => `<link rel="stylesheet" href="/css/${file}">`)
-            .join('\n    ');
+            .map(file => `<link rel="stylesheet" href="/css/${this.config.site.siteTheme}/css/${file}">`)
+            .join('\n');
     }
 
-    private getCommonData(): TemplateData {
-        return {
-            year: new Date().getFullYear(),
-            styles: this.generateCssLinks(),
-            siteTitle: this.config?.site.title || 'Zephyr MD',
-            siteDescription: this.config?.site.description || '',
-            author: this.config?.site.author || {},
-            site: this.config?.site || {},
-            blog: this.config?.blog || {},
-            theme: this.config?.theme || {}
+    private getTemplateData(processedContent: string): TemplateData {
+        const currentYear = new Date().getFullYear();
+        const siteBanner = this.config.site.banner;
+        const siteBannerLight = this.config.site['banner-light'];
+        const siteBannerDark = this.config.site['banner-dark'];
+
+        const data = {
+            year: currentYear,
+            baseCSS: this.generateCssLinks(),
+            codeCSS: this.generateCssLinks(),
+            siteBanner,
+            siteBannerLight,
+            siteBannerDark,
+            site: this.config.site,
+            content: processedContent,
+            blog: this.config.blog
         };
+
+        return data;
     }
 
-    private formatDate(date: string | Date): string {
-        const dateObj = typeof date === 'string' ? new Date(date) : date;
-        const dateFormat = this.config?.blog?.dateFormat || this.defaultDateFormat;
-        try {
-            return format(dateObj, dateFormat);
-        } catch (error) {
-            console.error(`Error formatting date with format ${dateFormat}:`, error);
-            return format(dateObj, this.defaultDateFormat);
-        }
+    clearCache(): void {
+        this.templateCache.clear();
     }
 
-    private getNestedValue(obj: any, path: string): any {
-        return path.split('.').reduce((current, key) => 
-            current && current[key] !== undefined ? current[key] : undefined, obj);
-    }
-
-    private replaceTemplateVariables(template: string, data: TemplateData): string {
-        let result = template;
-
-        // Handle #each directives
-        result = result.replace(
-            /\{\{#each\s+([^}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g,
-            (match: string, key: string, content: string) => {
-                const array = this.getNestedValue(data, key.trim());
-                if (!Array.isArray(array)) return '';
-                return array.map(item => {
-                    return content.replace(
-                        /\{\{([^}]+)\}\}/g,
-                        (m: string, k: string) => {
-                            const value = this.getNestedValue(item, k.trim());
-                            return value !== undefined ? String(value) : '';
-                        }
-                    );
-                }).join('\n');
-            }
-        );
-
-        // Handle #if directives
-        result = result.replace(
-            /\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g,
-            (match: string, key: string, content: string) => {
-                const value = this.getNestedValue(data, key.trim());
-                return value ? content : '';
-            }
-        );
-
-        // Handle regular variables
-        result = result.replace(
-            /\{\{([^}]+)\}\}/g,
-            (match: string, key: string) => {
-                const value = this.getNestedValue(data, key.trim());
-                return value !== undefined ? String(value) : match;
-            }
-        );
-
-        return result;
-    }
-
-    private processTemplateData(data: TemplateData): TemplateData {
-        const processedData: TemplateData = { ...data };
-
-        // Procesar fechas si existen
-        if (processedData.date) {
-            processedData.date = processedData.date; // Mantener la fecha original para el atributo datetime
-            processedData.date_formatted = this.formatDate(processedData.date);
-        }
-
-        // Procesar fechas en posts si existen
-        if (Array.isArray(processedData.posts)) {
-            processedData.posts = processedData.posts.map(post => ({
-                ...post,
-                date: post.date, // Mantener la fecha original para el atributo datetime
-                date_formatted: this.formatDate(post.date)
-            }));
-        }
-
-        return processedData;
-    }
-
-    private async renderTemplate(templateName: string, data: TemplateData): Promise<string> {
-        let template = this.templates.get(templateName);
-        if (!template) {
-            template = await this.loadTemplate(templateName);
-            this.templates.set(templateName, template);
-        }
-
-        // Procesar los datos y reemplazar variables en la plantilla
-        const processedData = this.processTemplateData(data);
-        let html = this.replaceTemplateVariables(template, processedData);
-
-        // Minificar el HTML antes de devolverlo
-        try {
-            const originalSize = Buffer.from(html).length;
-            const minified = await minify(html, this.minifyOptions);
-            const minifiedSize = Buffer.from(minified).length;
-            const reduction = ((originalSize - minifiedSize) / originalSize * 100).toFixed(2);
-            console.log(`HTML minification: ${originalSize} -> ${minifiedSize} bytes (${reduction}% reduction)`);
-            return minified;
-        } catch (error) {
-            console.error('Error minifying HTML:', error);
-            return html; // En caso de error, devolver el HTML sin minificar
-        }
+    formatDate(date: Date | string): string {
+        const d = new Date(date);
+        return d.toLocaleDateString(this.config.site.language, {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 
     async renderPost(post: BlogPost): Promise<string> {
-        const baseTemplate = await this.renderTemplate('base', {
-            ...this.getCommonData(),
-            content: await this.renderTemplate('post', {
-                ...this.getCommonData(),
-                title: post.title,
-                date: post.date,
-                content: post.content
-            })
-        });
-        return baseTemplate;
+        console.log('Rendering post with data:', JSON.stringify(post, null, 2));
+        const data = {
+            post: {
+                ...post,
+                date: this.formatDate(post.date),
+                language: post.language ? this.getLanguageDisplay(post.language) : null
+            }
+        };
+        console.log('Template data:', JSON.stringify(data, null, 2));
+        return this.renderTemplate('post', data);
     }
 
     async renderIndex(posts: BlogPost[]): Promise<string> {
-        const baseTemplate = await this.renderTemplate('base', {
-            ...this.getCommonData(),
-            content: await this.renderTemplate('index', {
-                ...this.getCommonData(),
-                posts: posts.map(post => ({
+        console.log('Rendering index with posts:', posts);
+        const data = {
+            posts: posts.map(post => {
+                console.log('Processing post for index:', post);
+                return {
                     title: post.title,
+                    slug: post.slug,
                     date: post.date,
-                    excerpt: post.excerpt,
-                    slug: post.slug
-                }))
+                    date_formatted: this.formatDate(post.date),
+                    excerpt: post.excerpt
+                };
             })
-        });
-        return baseTemplate;
+        };
+        return this.renderTemplate('index', data);
+    }
+
+    private getLanguageDisplay(language: string): { flag: string, name: string } {
+        // Mapa de idiomas a nombres
+        const languageNames: { [key: string]: string } = {
+            'es': 'Español',
+            'en': 'English',
+            'fr': 'Français',
+            'de': 'Deutsch',
+            'it': 'Italiano',
+            'pt': 'Português',
+            'ru': 'Русский',
+            'zh': '中文',
+            'ja': '日本語',
+            'ko': '한국어'
+        };
+
+        const langCode = language.toLowerCase().split('-')[0];
+        return {
+            flag: this.languageToFlag(langCode),
+            name: languageNames[langCode] || language.toUpperCase()
+        };
+    }
+
+    private languageToFlag(language: string): string {
+        // Mapa de idiomas a emojis de banderas
+        const languageToFlag: { [key: string]: string } = {
+            'es': '🇪🇸',
+            'en': '🇬🇧',
+            'fr': '🇫🇷',
+            'de': '🇩🇪',
+            'it': '🇮🇹',
+            'pt': '🇵🇹',
+            'ru': '🇷🇺',
+            'zh': '🇨🇳',
+            'ja': '🇯🇵',
+            'ko': '🇰🇷'
+        };
+
+        return languageToFlag[language] || '🌐';
     }
 }

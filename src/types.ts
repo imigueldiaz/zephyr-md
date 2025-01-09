@@ -4,12 +4,17 @@ export interface BlogPost {
     content: string;
     excerpt?: string;
     slug: string;
+    language?: string;
+    labels?: string[];
+    rawLabels?: string;
 }
 
 export interface PostMetadata {
     title: string;
     date: string;
     excerpt?: string;
+    language?: string;
+    labels?: string;
 }
 
 export interface GrayMatterFile<T = any> {
@@ -20,6 +25,7 @@ export interface GrayMatterFile<T = any> {
     language: string;
     matter: string;
     stringify(lang?: string): string;
+    labels?: string[];
 }
 
 export type GrayMatterOptions = {
@@ -36,37 +42,44 @@ export interface Matter {
     stringify(str: string, data: any, options?: GrayMatterOptions): string;
 }
 
-export interface SiteConfig {
-    title: string;
-    description: string;
-    language: string;
-    author: {
-        name: string;
-        email: string;
-        url: string;
-    };
-    social: {
-        github: string;
-        twitter: string;
-    };
+export interface TemplateData {
+    [key: string]: any;
 }
 
 export interface BlogConfig {
-    postsPerPage: number;
-    dateFormat: string;
-    license: {
+    postsPerPage?: number;
+    dateFormat?: string;
+    license?: {
         name: string;
         url: string;
     };
 }
 
 export interface ThemeConfig {
-    defaultMode: 'light' | 'dark' | 'auto';
-    accentColor: string;
+    defaultMode?: 'light' | 'dark' | 'auto';
+    accentColor?: string;
+    syntaxHighlighting?: boolean;
+    darkMode?: boolean;
+}
+
+export interface SiteConfig {
+    title: string;
+    description: string;
+    language: string;
+    siteTheme: string;
+    author?: {
+        name: string;
+        email: string;
+        url: string;
+    };
+    social?: {
+        github: string;
+        twitter: string;
+    };
 }
 
 export interface Config {
     site: SiteConfig;
-    blog: BlogConfig;
-    theme: ThemeConfig;
+    blog?: BlogConfig;
+    theme?: ThemeConfig;
 }

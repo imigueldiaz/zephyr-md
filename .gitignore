@@ -1,58 +1,42 @@
-# Logs
-logs
-*.log
+# Node.js
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
-.pnpm-debug.log*
 
-# Dependency directories and files
-node_modules/
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
-.pnp.*
-package-lock.json
-yarn.lock
-
-# Build and distribution
+# Build outputs
 dist/
 build/
 *.tsbuildinfo
 
 # IDE and editor files
-.idea/
 .vscode/
+.idea/
 *.swp
 *.swo
 .DS_Store
-Thumbs.db
 
-# Environment and local config
+# Environment variables
 .env
-.env.*
-config.local.json
-*.local.yml
+.env.local
+.env.*.local
 
-# TypeScript configuration
-tsconfig.tsbuildinfo
+# Logs
+logs/
+*.log
 
-# Test coverage
-coverage/
-.nyc_output/
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
 
 # Project specific
 content/drafts/
 content/private/
 content/media/private/
-
-# Docker
-.docker
-docker-compose.override.yml
+public/images/
+public/uploads/
 
 # Temporary files
 *.tmp

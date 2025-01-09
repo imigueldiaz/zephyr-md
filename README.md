@@ -111,6 +111,87 @@ Modify HTML templates in the `templates` directory:
 - `post.html`: Individual post template
 - `index.html`: Home page template
 
+## Themes
+
+Zephyr MD comes with a powerful theming system that allows you to completely customize the look and feel of your site. The default theme provides a modern, clean design with both light and dark modes.
+
+### Creating a New Theme
+
+Creating a new theme from scratch can be challenging due to the complexity of the CSS and the need to handle both light and dark modes, responsive design, and various components like code blocks, tables, and navigation. The recommended approach is:
+
+1. **Duplicate the Default Theme**
+   ```bash
+   cp -r templates/default templates/your-theme-name
+   ```
+
+2. **Update Configuration**
+   Edit `config.json` to use your new theme:
+   ```json
+   {
+     "site": {
+       "siteTheme": "your-theme-name",
+       ...
+     }
+   }
+   ```
+
+3. **Customize the Theme**
+   The theme structure includes:
+   - `base.html`: Main template with header, footer, and scripts
+   - `post.html`: Template for blog posts
+   - `index.html`: Template for the home page
+   - `css/`
+     - `base.css`: Core styles and variables
+     - `code.css`: Code block styling (syntax highlighting)
+     - `post.css`: Blog post specific styles
+   - `scripts/`: JavaScript files for interactivity
+
+### Theme Development Tips
+
+- **CSS Variables**: The default theme uses CSS variables for colors, spacing, and other properties. These are defined at the root level with light/dark mode variants:
+  ```css
+  :root {
+    --bg-color: #ffffff;
+    --text-color: #1a202c;
+    /* ... other variables ... */
+  }
+
+  [data-theme="dark"] {
+    --bg-color: #1a202c;
+    --text-color: #f7fafc;
+    /* ... dark mode overrides ... */
+  }
+  ```
+
+- **Code Block Styling**: Code blocks use highlight.js for syntax highlighting. The CSS is complex and carefully tuned for readability. Consider keeping the default code styling as a base.
+
+- **Responsive Design**: The default theme includes comprehensive media queries for various screen sizes. Test your modifications across different devices.
+
+- **Accessibility**: The default theme follows WCAG guidelines. Maintain good color contrast ratios and semantic HTML structure.
+
+### Testing Your Theme
+
+1. Make sure all features work in both light and dark modes
+2. Test responsive layouts at different screen sizes
+3. Verify code block formatting with different languages
+4. Check table layouts and responsive behavior
+5. Test navigation and interactive elements
+
+### Common Pitfalls
+
+- **Starting from Scratch**: The default theme's CSS is complex and handles many edge cases. Starting from scratch means reimplementing all this functionality.
+- **Dark Mode**: Implementing a good dark mode requires careful consideration of colors, contrasts, and transitions.
+- **Code Blocks**: Syntax highlighting and line numbers require specific CSS structure. Modifying these can break functionality.
+- **Performance**: Complex CSS selectors and transitions can impact performance. The default theme is optimized for this.
+
+### Recommended Workflow
+
+1. Start by duplicating the default theme
+2. Make small, incremental changes
+3. Test frequently across different devices and modes
+4. Use browser dev tools to understand the existing styles
+5. Document your changes for future maintenance
+
 ## 🐳 Docker Support
 
 ### Quick Start
