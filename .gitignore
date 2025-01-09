@@ -35,7 +35,7 @@ pids/
 content/drafts/
 content/private/
 content/media/private/
-public/images/
+# public/images/
 public/uploads/
 
 # Temporary files
