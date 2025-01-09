@@ -67,11 +67,24 @@
         referrerpolicy="no-referrer"></script>
     <script>
         // Initialize highlight.js with line numbers
+        function escapeHTML(str) {
+            return str.replace(/[&<>"']/g, function (match) {
+                const escapeMap = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                };
+                return escapeMap[match];
+            });
+        }
+
         document.querySelectorAll('pre code').forEach((block) => {
             // Add line numbers
             const lines = block.textContent.split('\n');
             block.innerHTML = lines.map((line, index) => 
-                `<span class="line">${line}</span>`
+                `<span class="line">${escapeHTML(line)}</span>`
             ).join('\n');
             
             // Apply syntax highlighting
