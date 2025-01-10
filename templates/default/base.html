@@ -13,13 +13,14 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/public/images/apple-touch-icon.png">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" 
-        integrity="sha512-6hD9L4jT7dH0j1ZUzq2cL2XpY6f1bY2w2Jp7vP3dgyK+2XqNwTfB6v5cK2KxaTn7d2Z5NpB6p9T7tQeA==" 
-        crossorigin="anonymous" 
-        referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="/styles/base.css">
-    <link rel="stylesheet" href="/styles/code.css">
-    <link rel="stylesheet" href="/styles/post.css">
+    
+    <link rel="stylesheet" type="text/css" href="/styles/base.css">
+    <link rel="stylesheet" type="text/css" href="/styles/code.css">
+    <link rel="stylesheet" type="text/css" href="/styles/post.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css" 
+    integrity="sha512-0aPQyyeZrWj9sCA46UlmWgKOP0mUipLQ6OZXu8l4IcAmD2u31EPEy9VcIMvl7SoAKe8bLXZhYoMaE/in+gcgA==" 
+    crossorigin="anonymous" 
+    referrerpolicy="no-referrer">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,7 +28,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     
     <!-- Scripts -->
-    <script src="/scripts/theme-switch.js" defer></script>
+    <script type="text/javascript" src="/scripts/theme-switch.js" defer></script>
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -50,11 +51,11 @@
             </h1>
         </nav>
     </header>
-
+    
     <main id="main-content" role="main" tabindex="-1">
         {{{content}}}
     </main>
-
+    
     <footer role="contentinfo" class="site-footer">
         <p>&copy; {{year}} {{site.author.name}}{{#if blog.license}} · <a href="{{blog.license.url}}" target="_blank" rel="license">{{blog.license.name}}</a>{{/if}}</p>
     </footer>
@@ -62,51 +63,31 @@
     <a href="#" class="back-to-top" aria-label="Back to top">↑</a>
     
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" 
-        integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" 
-        crossorigin="anonymous" 
-        referrerpolicy="no-referrer"></script>
-    <script>
-        // Initialize highlight.js with line numbers
-        function escapeHTML(str) {
-            return str.replace(/[&<>"']/g, function (match) {
-                const escapeMap = {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
-                };
-                return escapeMap[match];
-            });
-        }
-
-        document.querySelectorAll('pre code').forEach((block) => {
-            // Add line numbers
-            const lines = block.textContent.split('\n');
-            block.innerHTML = lines.map((line, index) => 
-                `<span class="line">${escapeHTML(line)}</span>`
-            ).join('\n');
-            
-            // Apply syntax highlighting
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js" integrity="sha512-EBLzUL8XLl+va/zAsmXwS7Z2B1F9HUHkZwyS/VKwh3S7T/U0nF4BaU29EP/ZSf6zgiIxYAnKLu6bJ8dqpmX5uw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize highlight.js and apply to code blocks
             hljs.configure({
                 ignoreUnescapedHTML: true
             });
-            hljs.highlightElement(block);
+            
+            document.querySelectorAll('pre code').forEach((block) => {
+                // Apply syntax highlighting
+                hljs.highlightElement(block);
+            });
+            
+            // Back to top visibility
+            const backToTop = document.querySelector('.back-to-top');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            });
         });
-        
-        // Back to top visibility
-        const backToTop = document.querySelector('.back-to-top');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 300) {
-                backToTop.classList.add('visible');
-            } else {
-                backToTop.classList.remove('visible');
-            }
-        });
-        
-        // Smooth scroll behavior
-        document.documentElement.style.scrollBehavior = 'smooth';
     </script>
+    <script type="text/javascript" src="/scripts/copy-code.js" defer></script>
 </body>
 </html>

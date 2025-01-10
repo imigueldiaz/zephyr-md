@@ -102,14 +102,6 @@
     "@types/connect" "*"
     "@types/node" "*"
 
-"@types/clean-css@*":
-  version "4.2.11"
-  resolved "https://registry.yarnpkg.com/@types/clean-css/-/clean-css-4.2.11.tgz#3f170dedd8d096fe7e7bd1c8dda0c8314217cbe6"
-  integrity sha512-Y8n81lQVTAfP2TOdtJJEsCoYl1AnOkqDqMvXb9/7pfgZZ7r8YrEyurrAvAoAjHOGXKRybay+5CsExqIH6liccw==
-  dependencies:
-    "@types/node" "*"
-    source-map "^0.6.0"
-
 "@types/connect@*":
   version "3.4.38"
   resolved "https://registry.npmjs.org/@types/connect/-/connect-3.4.38.tgz"
@@ -144,19 +136,10 @@
   dependencies:
     helmet "*"
 
-"@types/html-minifier-terser@7.0.2":
+"@types/html-minifier-terser@^7.0.2":
   version "7.0.2"
   resolved "https://registry.yarnpkg.com/@types/html-minifier-terser/-/html-minifier-terser-7.0.2.tgz#2290fa13e6e49b6cc0ab0afa2d6cf6a66feedb48"
   integrity sha512-mm2HqV22l8lFQh4r2oSsOEVea+m0qqxEmwpc9kC1p/XzmjLWrReR9D/GRs8Pex2NX/imyEH9c5IU/7tMBQCHOA==
-
-"@types/html-minifier@4.0.5":
-  version "4.0.5"
-  resolved "https://registry.yarnpkg.com/@types/html-minifier/-/html-minifier-4.0.5.tgz#d6f64ffcf884f6c53ceb2f6ddbd8188f9badb6e9"
-  integrity sha512-LfE7f7MFd+YUfZnlBz8W43P4NgSObWiqyKapANsWCj63Aqeqli8/9gVsGP4CwC8jPpTTYlTopKCk9rJSuht/ew==
-  dependencies:
-    "@types/clean-css" "*"
-    "@types/relateurl" "*"
-    "@types/uglify-js" "*"
 
 "@types/http-errors@*":
   version "2.0.4"
@@ -192,11 +175,6 @@
   resolved "https://registry.npmjs.org/@types/range-parser/-/range-parser-1.2.7.tgz"
   integrity sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==
 
-"@types/relateurl@*":
-  version "0.2.33"
-  resolved "https://registry.yarnpkg.com/@types/relateurl/-/relateurl-0.2.33.tgz#fa174c30100d91e88d7b0ba60cefd7e8c532516f"
-  integrity sha512-bTQCKsVbIdzLqZhLkF5fcJQreE4y1ro4DIyVrlDNSCJRRwHhB8Z+4zXXa8jN6eDvc2HbRsEYgbvrnGvi54EpSw==
-
 "@types/send@*":
   version "0.17.4"
   resolved "https://registry.npmjs.org/@types/send/-/send-0.17.4.tgz"
@@ -213,13 +191,6 @@
     "@types/http-errors" "*"
     "@types/node" "*"
     "@types/send" "*"
-
-"@types/uglify-js@*":
-  version "3.17.5"
-  resolved "https://registry.yarnpkg.com/@types/uglify-js/-/uglify-js-3.17.5.tgz#905ce03a3cbbf2e31cbefcbc68d15497ee2e17df"
-  integrity sha512-TU+fZFBTBcXj/GpDpDaBmgWk/gn96kMZ+uocaFUlV2f8a6WdMzzI44QBCmGcCiYR0Y6ZlNRiyUyKKt5nl/lbzQ==
-  dependencies:
-    source-map "^0.6.1"
 
 accepts@~1.3.8:
   version "1.3.8"
@@ -336,14 +307,6 @@ call-bound@^1.0.2:
     call-bind-apply-helpers "^1.0.1"
     get-intrinsic "^1.2.6"
 
-camel-case@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/camel-case/-/camel-case-3.0.0.tgz#ca3c3688a4e9cf3a4cda777dc4dcbc713249cf73"
-  integrity sha512-+MbKztAYHXPr1jNTSKQF52VpcFjwY5RkR7fxksV8Doo4KAYc5Fl4UJRgthBbTmEx8C54DqahhbLJkDwjI3PI/w==
-  dependencies:
-    no-case "^2.2.0"
-    upper-case "^1.1.1"
-
 camel-case@^4.1.2:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/camel-case/-/camel-case-4.1.2.tgz#9728072a954f805228225a6deea6b38461e1bd5a"
@@ -351,13 +314,6 @@ camel-case@^4.1.2:
   dependencies:
     pascal-case "^3.1.2"
     tslib "^2.0.3"
-
-clean-css@^4.2.1:
-  version "4.2.4"
-  resolved "https://registry.yarnpkg.com/clean-css/-/clean-css-4.2.4.tgz#733bf46eba4e607c6891ea57c24a989356831178"
-  integrity sha512-EJUDT7nDVFDvaQgAo2G/PJvxmp1o/c6iXLbswsBbUFXi1Nr+AjA2cKmfbKDMjMvzEe75g3P6JkaDDAKk96A85A==
-  dependencies:
-    source-map "~0.6.0"
 
 clean-css@~5.3.2:
   version "5.3.3"
@@ -383,7 +339,7 @@ commander@^10.0.0:
   resolved "https://registry.yarnpkg.com/commander/-/commander-10.0.1.tgz#881ee46b4f77d1c1dccc5823433aa39b022cbe06"
   integrity sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==
 
-commander@^2.19.0, commander@^2.20.0:
+commander@^2.20.0:
   version "2.20.3"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
   integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
@@ -415,7 +371,14 @@ create-require@^1.1.0:
   resolved "https://registry.npmjs.org/create-require/-/create-require-1.1.1.tgz"
   integrity sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==
 
-cross-spawn@^7.0.0, cross-spawn@^7.0.5:
+cross-env@^7.0.3:
+  version "7.0.3"
+  resolved "https://registry.yarnpkg.com/cross-env/-/cross-env-7.0.3.tgz#865264b29677dc015ba8418918965dd232fc54cf"
+  integrity sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==
+  dependencies:
+    cross-spawn "^7.0.1"
+
+cross-spawn@^7.0.0, cross-spawn@^7.0.1, cross-spawn@^7.0.5:
   version "7.0.6"
   resolved "https://registry.yarnpkg.com/cross-spawn/-/cross-spawn-7.0.6.tgz#8a58fe78f00dcd70c370451759dfbfaf03e8ee9f"
   integrity sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==
@@ -695,22 +658,17 @@ hasown@^2.0.2:
   dependencies:
     function-bind "^1.1.2"
 
-he@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
-  integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
-
 helmet@*, helmet@8.0.0:
   version "8.0.0"
   resolved "https://registry.yarnpkg.com/helmet/-/helmet-8.0.0.tgz#05370fb1953aa7b81bd0ddfa459221247be6ea5c"
   integrity sha512-VyusHLEIIO5mjQPUI1wpOAEu+wl6Q0998jzTxqUYGE45xCIcAxy3MsbEK/yyJUJ3ADeMoB6MornPH6GMWAf+Pw==
 
-highlight.js@^11.11.1:
+highlight.js@11.11.1:
   version "11.11.1"
-  resolved "https://registry.npmjs.org/highlight.js/-/highlight.js-11.11.1.tgz"
+  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-11.11.1.tgz#fca06fa0e5aeecf6c4d437239135fabc15213585"
   integrity sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==
 
-html-minifier-terser@7.2.0:
+html-minifier-terser@^7.2.0:
   version "7.2.0"
   resolved "https://registry.yarnpkg.com/html-minifier-terser/-/html-minifier-terser-7.2.0.tgz#18752e23a2f0ed4b0f550f217bb41693e975b942"
   integrity sha512-tXgn3QfqPIpGl9o+K5tpcj3/MN4SfLtsx2GWwBC3SSd0tXQGyF3gsSqad8loJgKZGM3ZxbYDd5yhiBIdWpmvLA==
@@ -722,19 +680,6 @@ html-minifier-terser@7.2.0:
     param-case "^3.0.4"
     relateurl "^0.2.7"
     terser "^5.15.1"
-
-html-minifier@4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/html-minifier/-/html-minifier-4.0.0.tgz#cca9aad8bce1175e02e17a8c33e46d8988889f56"
-  integrity sha512-aoGxanpFPLg7MkIl/DDFYtb0iWz7jMFGqFhvEDZga6/4QTjneiD8I/NXL1x5aaoCp7FSIT6h/OhykDdPsbtMig==
-  dependencies:
-    camel-case "^3.0.0"
-    clean-css "^4.2.1"
-    commander "^2.19.0"
-    he "^1.2.0"
-    param-case "^2.1.1"
-    relateurl "^0.2.7"
-    uglify-js "^3.5.1"
 
 http-errors@2.0.0:
   version "2.0.0"
@@ -800,11 +745,6 @@ kind-of@^6.0.0, kind-of@^6.0.2:
   version "6.0.3"
   resolved "https://registry.npmjs.org/kind-of/-/kind-of-6.0.3.tgz"
   integrity sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==
-
-lower-case@^1.1.1:
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/lower-case/-/lower-case-1.1.4.tgz#9a2cabd1b9e8e0ae993a4bf7d5875c39c42e8eac"
-  integrity sha512-2Fgx1Ycm599x+WGpIYwJOvsjmXFzTSc34IwDWALRA/8AopUKAVPwfJ+h5+f85BCp0PWmmJcWzEpxOpoXycMpdA==
 
 lower-case@^2.0.2:
   version "2.0.2"
@@ -902,13 +842,6 @@ neo-async@^2.6.2:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-no-case@^2.2.0:
-  version "2.3.2"
-  resolved "https://registry.yarnpkg.com/no-case/-/no-case-2.3.2.tgz#60b813396be39b3f1288a4c1ed5d1e7d28b464ac"
-  integrity sha512-rmTZ9kz+f3rCvK2TD1Ue/oZlns7OGoIWP4fc3llxxRXlOkHKoWPPWJOfFYpITabSow43QJbRIoHQXtt10VldyQ==
-  dependencies:
-    lower-case "^1.1.1"
-
 no-case@^3.0.4:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/no-case/-/no-case-3.0.4.tgz#d361fd5c9800f558551a8369fc0dcd4662b6124d"
@@ -933,13 +866,6 @@ package-json-from-dist@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/package-json-from-dist/-/package-json-from-dist-1.0.1.tgz#4f1471a010827a86f94cfd9b0727e36d267de505"
   integrity sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==
-
-param-case@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/param-case/-/param-case-2.1.1.tgz#df94fd8cf6531ecf75e6bef9a0858fbc72be2247"
-  integrity sha512-eQE845L6ot89sk2N8liD8HAuH4ca6Vvr7VWAWwt7+kvvG5aBcPmmphQ68JsEG2qa9n1TykS2DLeMt363AAH8/w==
-  dependencies:
-    no-case "^2.2.0"
 
 param-case@^3.0.4:
   version "3.0.4"
@@ -1259,7 +1185,7 @@ typescript@^5.7.2:
   resolved "https://registry.npmjs.org/typescript/-/typescript-5.7.2.tgz"
   integrity sha512-i5t66RHxDvVN40HfDd1PsEThGNnlMCMT3jMUuoh9/0TaqWevNontacunWyN02LA9/fIbEWlcHZcgTKb9QoaLfg==
 
-uglify-js@^3.1.4, uglify-js@^3.5.1:
+uglify-js@^3.1.4:
   version "3.19.3"
   resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.19.3.tgz#82315e9bbc6f2b25888858acd1fff8441035b77f"
   integrity sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==
@@ -1273,11 +1199,6 @@ unpipe@1.0.0, unpipe@~1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/unpipe/-/unpipe-1.0.0.tgz"
   integrity sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==
-
-upper-case@^1.1.1:
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/upper-case/-/upper-case-1.1.3.tgz#f6b4501c2ec4cdd26ba78be7222961de77621598"
-  integrity sha512-WRbjgmYzgXkCV7zNVpy5YgrHgbBv126rMALQQMrmzOVC4GM2waQ9x7xtm8VU+1yF2kWyPzI9zbZ48n4vSxwfSA==
 
 utils-merge@1.0.1:
   version "1.0.1"

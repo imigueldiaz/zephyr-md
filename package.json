@@ -13,8 +13,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist .yarn/cache",
+    "clean:cache": "rimraf .yarn/cache",
+    "dev": "cross-env yarn clean:cache && ts-node src/index.ts",
+    "dev:clean": "cross-env yarn clean && yarn clean:cache && yarn && ts-node src/index.ts"
   },
   "dependencies": {
     "@types/helmet": "4.0.0",
@@ -25,7 +27,7 @@
     "gray-matter": "^4.0.3",
     "handlebars": "4.7.8",
     "helmet": "8.0.0",
-    "highlight.js": "^11.11.1",
+    "highlight.js": "11.11.1",
     "html-minifier-terser": "^7.2.0",
     "marked": "^15.0.6"
   },
@@ -34,6 +36,7 @@
     "@types/html-minifier-terser": "^7.0.2",
     "@types/marked": "^6.0.0",
     "@types/node": "^22.10.5",
+    "cross-env": "^7.0.3",
     "rimraf": "^5.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"

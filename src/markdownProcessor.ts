@@ -101,19 +101,43 @@ export class MarkdownProcessor {
             
             // Configurar marked para el resaltado de código
             const renderer = new marked.Renderer();
-            renderer.code = function(this: Renderer, { text, lang }: Tokens.Code): string {
+            renderer.code = function({ text, lang, escaped }: { text: string; lang?: string; escaped?: boolean }): string {
                 const language = lang || 'plaintext';
                 try {
+                    // Split the text into lines
+                    const lines = text.split('\n');
+                    
+                    // Create line numbers
+                    const lineNumbers = lines.map((_, i) => 
+                        `<span class="line-number">${i + 1}</span>`
+                    ).join('');
+
+                    // Process code lines with highlighting
+                    let codeContent = text;
                     if (language && hljs.getLanguage(language)) {
-                        const highlighted = hljs.highlight(text, { language }).value;
-                        return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`;
+                        codeContent = hljs.highlight(text, { language }).value;
                     }
-                    return `<pre><code class="hljs">${hljs.highlightAuto(text).value}</code></pre>`;
+
+                    return `
+                        <div class="code-block">
+                            <div class="line-numbers">${lineNumbers}</div>
+                            <pre><code class="hljs language-${language}">${codeContent}</code></pre>
+                        </div>`;
                 } catch (error) {
                     console.error('Error highlighting code:', error);
-                    return `<pre><code class="hljs">${hljs.highlightAuto(text).value}</code></pre>`;
+                    return `<pre><code class="hljs">${escaped ? text : escapeHTML(text)}</code></pre>`;
                 }
             };
+
+            // Función auxiliar para escapar HTML
+            function escapeHTML(text: string): string {
+                return text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
 
             // Remove first H1 if it matches the frontmatter title
             const lines = content.split('\n');

@@ -8,6 +8,7 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
+[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/imigueldiaz/zephyr-md?style=flat)](https://github.com/imigueldiaz/zephyr-md/tags)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A modern, lightweight static site generator focused on markdown-based blogging with exceptional syntax highlighting and accessibility.
@@ -26,6 +27,10 @@ A modern, lightweight static site generator focused on markdown-based blogging w
 - ♿ **Accessibility**: WCAG 2.1 compliant
 - 📋 **Code Copying**: One-click code block copying
 - 🔧 **Customizable**: Easy to extend and modify
+- 🔒 **Helmet Integration**: Comprehensive security headers
+- 🚦 **Rate Limiting**: Protection against abuse (100 requests per 15 minutes)
+- 👤 **Non-root Docker User**: Enhanced container security
+- 🔐 **CSP Headers**: Strict Content Security Policy
 
 ## 🚀 Quick Start
 
@@ -236,7 +241,7 @@ The easiest way to get started is using Docker. Just run:
 
 ```bash
 docker run -d \
-  -p 8585:3000 \
+  -p 8585:8585 \
   -v ./content:/app/content \
   --name zephyr-md \
   ghcr.io/imigueldiaz/zephyr-md:latest
@@ -253,12 +258,14 @@ services:
   app:
     image: ghcr.io/imigueldiaz/zephyr-md:latest
     ports:
-      - "8585:3000"
+      - "8585:8585"
     volumes:
       - ./content:/app/content
+      - ./public:/app/public
+      - ./templates:/app/templates
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=8585
     restart: unless-stopped
 ```
 
@@ -268,238 +275,63 @@ services:
 docker-compose up -d
 ```
 
-### Configuration
+### Environment Variables
 
-#### Environment Variables
+- `PORT`: Server port (default: 8585)
+- `HOST`: Server host (default: localhost)
+- `NODE_ENV`: Environment mode (development/production)
 
-- `NODE_ENV`: Set the Node.js environment (default: `production`)
-- `PORT`: Set the internal port (default: `3000`)
+### Volumes
 
-#### Volumes
+- `/app/content`: Blog posts and content
+- `/app/public`: Static files (images, etc.)
+- `/app/templates`: Theme templates
 
-- `/app/content`: Mount your markdown content directory here
+## 🔧 Advanced Configuration
 
-### Security Features
+### Security Settings
 
-- Non-root container user
-- Signed container images with Cosign
-- Regular security updates
-- Vulnerability scanning with Trivy
-- SBOM (Software Bill of Materials) included
+The application uses Helmet for security headers. Default CSP configuration:
 
-### Available Tags
+```javascript
+{
+  defaultSrc: ["'self'"],
+  scriptSrc: ["'self'", "'unsafe-inline'", 'cdnjs.cloudflare.com'],
+  styleSrc: ["'self'", "'unsafe-inline'", 'fonts.googleapis.com', 'cdnjs.cloudflare.com'],
+  imgSrc: ["'self'", "data:", "https:"],
+  fontSrc: ["'self'", "fonts.gstatic.com", "fonts.googleapis.com"]
+}
+```
 
-- `latest`: Latest stable release from main branch
-- `vX.Y.Z`: Specific version releases (e.g., `v0.2.0`)
+### Rate Limiting
 
-### Container Registry
+Default rate limit configuration:
+- Window: 15 minutes
+- Max Requests: 100 per IP
+- Standard Headers: Enabled
+- Legacy Headers: Disabled
 
-The image is available on GitHub Container Registry:
-- `ghcr.io/imigueldiaz/zephyr-md`
+### Logging
 
-## 🛠️ Development
+- Automatic log directory creation at `logs/`
+- Structured logging with timestamp and log levels
+- Production-ready logging configuration
 
-### Project Structure
+## 🏗️ Project Structure
 
 ```
 zephyr-md/
-├── content/          # Markdown content
-├── src/              # TypeScript source
-├── templates/        # HTML templates and assets
-├── dist/            # Built files
+├── content/          # Blog posts and content
+│   └── posts/        # Markdown files
+├── public/           # Static assets
+├── src/             # TypeScript source
+├── templates/        # Theme templates
+│   └── default/     # Default theme
+│       ├── css/     # Stylesheets
+│       ├── scripts/ # JavaScript
+│       └── *.html   # Template files
 └── config.json      # Site configuration
 ```
-
-### Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 🔄 Content Management with Git
-
-### Writing and Publishing Posts
-
-1. Create new posts in the `content/posts` directory:
-```bash
-content/posts/
-├── 2025-01-08-my-first-post.md
-├── 2025-01-08-another-post.md
-└── drafts/
-    └── upcoming-post.md
-```
-
-2. Use Git for version control:
-```bash
-# Create a new branch for your content
-git checkout -b content/new-post
-
-# Add and commit your changes
-git add content/posts/
-git commit -m "Add new post about..."
-
-# Push to your repository
-git push origin content/new-post
-
-# Merge through a pull request
-```
-
-### Remote Deployment
-
-#### Initial Server Setup
-
-1. Set up your Digital Ocean droplet:
-   - Use SSH keys for authentication
-   - Enable UFW firewall
-   - Set up fail2ban
-   - Configure a non-root user
-
-2. Install dependencies:
-```bash
-# Update system
-sudo apt update && sudo apt upgrade
-
-# Install Node.js 18.x and yarn
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
-npm install -g yarn
-```
-
-3. Set up deployment keys:
-```bash
-# On your server
-ssh-keygen -t ed25519 -C "deploy-key"
-# Add the public key to your GitHub repository's deploy keys
-```
-
-#### Automated Deployment
-
-1. Create a deployment script (`deploy.sh`):
-```bash
-#!/bin/bash
-set -e
-
-# Configuration
-REPO_URL="git@github.com:yourusername/zephyr-md.git"
-DEPLOY_DIR="/var/www/zephyr-md"
-BRANCH="main"
-
-# Update repository
-if [ -d "$DEPLOY_DIR" ]; then
-    cd "$DEPLOY_DIR"
-    git fetch origin
-    git reset --hard "origin/$BRANCH"
-else
-    git clone -b "$BRANCH" "$REPO_URL" "$DEPLOY_DIR"
-    cd "$DEPLOY_DIR"
-fi
-
-# Install dependencies and build
-yarn install
-yarn build
-
-# Restart service if needed
-pm2 restart zephyr-md
-```
-
-2. Set up a systemd service:
-```ini
-[Unit]
-Description=Zephyr MD Blog
-After=network.target
-
-[Service]
-Type=simple
-User=zephyr
-WorkingDirectory=/var/www/zephyr-md
-ExecStart=/usr/bin/yarn start
-Restart=always
-Environment=NODE_ENV=production
-
-[Install]
-WantedBy=multi-user.target
-```
-
-3. Configure GitHub Actions for automated deployment:
-```yaml
-name: Deploy to Production
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: SSH and deploy
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd /var/www/zephyr-md
-            ./deploy.sh
-
-```
-
-### Security Best Practices
-
-1. **Content Security**:
-   - Keep sensitive content in private repositories
-   - Use `.gitignore` for excluding drafts or private content
-   - Implement content validation before deployment
-
-2. **Server Security**:
-   - Use SSH key authentication only (disable password login)
-   - Keep system and dependencies updated
-   - Use HTTPS with Let's Encrypt
-   - Implement rate limiting
-   - Regular security audits
-
-3. **Access Control**:
-   - Use separate deploy keys for each environment
-   - Implement role-based access in GitHub
-   - Regular key rotation
-   - Audit logs monitoring
-
-4. **Backup Strategy**:
-   - Regular automated backups
-   - Store backups in multiple locations
-   - Test backup restoration regularly
-
-### Workflow Recommendations
-
-1. **Content Organization**:
-   - Use clear naming conventions for files
-   - Organize posts by date and category
-   - Keep media files in a separate directory
-   - Use drafts folder for work in progress
-
-2. **Version Control**:
-   - Create feature branches for new content
-   - Use meaningful commit messages
-   - Review changes before merging
-   - Tag important releases
-
-3. **Deployment**:
-   - Use staging environment for testing
-   - Implement continuous integration
-   - Automated testing before deployment
-   - Easy rollback mechanism
-
-4. **Monitoring**:
-   - Set up uptime monitoring
-   - Configure error logging
-   - Monitor system resources
-   - Set up alerts for critical issues
 
 ## 📄 License
 

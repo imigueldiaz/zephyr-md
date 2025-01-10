@@ -213,17 +213,16 @@ pre::-webkit-scrollbar-thumb:hover {
     top: 0.5rem;
     right: 0.5rem;
     padding: 0.5rem;
-    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 4px;
-    background: var(--bg-color);
-    color: var(--text-color);
+    color: #d4d4d4;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s ease, background-color 0.2s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    opacity: 0;
 }
 
 .code-block-wrapper:hover .copy-code-button {
@@ -231,12 +230,29 @@ pre::-webkit-scrollbar-thumb:hover {
 }
 
 .copy-code-button:hover {
-    background: var(--border-color);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .copy-code-button.copied {
-    background: var(--link-color);
-    color: var(--bg-color);
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.copy-code-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Soporte para tema claro */
+[data-theme="light"] .copy-code-button {
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    color: #666;
+}
+
+[data-theme="light"] .copy-code-button:hover {
+    background: rgba(0, 0, 0, 0.2);
 }
 
 /* Soporte para reducción de movimiento */
@@ -267,5 +283,95 @@ pre::-webkit-scrollbar-thumb:hover {
     
     code {
         font-size: 0.85em;
+    }
+}
+
+/* Contenedor de bloque de código */
+.code-block {
+    display: flex;
+    background: var(--code-bg);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+/* Área de números de línea */
+.line-numbers {
+    flex: 0 0 2em;
+    background: var(--line-numbers-bg);
+    border-right: 1px solid var(--border-color);
+    text-align: right;
+    user-select: none;
+}
+
+.line-number {
+    color: var(--line-number-color);
+    font-size: 0.85em;
+    line-height: 1.5rem;
+    padding: 0 0.5em;
+    opacity: 0.5;
+    font-family: var(--code-font);
+    display: block;
+    white-space: nowrap;
+}
+
+/* Contenedor de código */
+pre {
+    flex: 1;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+code {
+    display: block;
+    font-family: var(--code-font);
+    font-size: 0.85em;
+    line-height: 1.5rem;
+    tab-size: 2;
+    padding: 0;
+}
+
+.hljs {
+    padding: 0;
+    background: transparent;
+}
+
+/* Asegurar que el primer y último elemento tengan el mismo padding que el contenedor */
+.line-numbers .line-number:first-child {
+    padding-top: 0.75rem;
+}
+
+.line-numbers .line-number:last-child {
+    padding-bottom: 0.75rem;
+}
+
+/* Variables CSS para temas */
+:root {
+    --code-font: 'Fira Code', 'Consolas', monospace;
+    --code-bg: #f8f9fa;
+    --line-numbers-bg: #f1f3f5;
+    --line-number-color: #6c757d;
+    --border-color: #e9ecef;
+}
+
+[data-theme="dark"],
+:root[data-theme="dark"] {
+    --code-bg: #1e1e1e;
+    --line-numbers-bg: #252526;
+    --line-number-color: #858585;
+    --border-color: #2d2d2d;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root[data-theme="auto"] {
+        --code-bg: #1e1e1e;
+        --line-numbers-bg: #252526;
+        --line-number-color: #858585;
+        --border-color: #2d2d2d;
     }
 }
