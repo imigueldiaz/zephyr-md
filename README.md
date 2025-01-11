@@ -7,7 +7,7 @@
 </p>
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue.svg)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-22.x-green.svg)](https://nodejs.org/)
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/imigueldiaz/zephyr-md?style=flat)](https://github.com/imigueldiaz/zephyr-md/tags)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -36,8 +36,8 @@ A modern, lightweight static site generator focused on markdown-based blogging w
 
 ### Prerequisites
 
-- Node.js 18.x or higher
-- Yarn 1.22.0 or higher (`npm install -g yarn`)
+- Node.js 18.20.5 or higher (tested versions: 18.20.5, 22.13.0)
+- Yarn 1.22.22 or higher
 
 ### Installation
 
@@ -57,7 +57,7 @@ yarn
 yarn dev
 ```
 
-Your site will be available at `http://localhost:3000`
+Your site will be available at `http://localhost:8585`
 
 ## 📖 Usage
 
