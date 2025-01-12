@@ -3,6 +3,7 @@ import { validationResult } from 'express-validator';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import MarkdownIt from 'markdown-it';
 
 interface Author {
     name: string;
@@ -73,22 +74,89 @@ export const uploadMarkdown = async (req: Request, res: Response): Promise<void>
 
         const fileContent = req.file.buffer.toString('utf-8');
 
-        // Validate front matter
+        // Basic content validation
+        if (fileContent.length > 1024 * 1024) { // 1MB limit
+            res.status(400).json({ message: 'File too large' });
+            return;
+        }
+
+        // Check for potentially dangerous content
+        const dangerousPatterns = [
+            /<%.*%>/g,           // EJS/ASP tags
+            /<\?.*\?>/g,         // PHP tags
+            /\{\{.*\}\}/g,       // Handlebars/Mustache
+            /<script.*>.*<\/script>/gis,  // Script tags
+            /javascript:/gi,      // JavaScript protocol
+            /data:/gi,           // Data URLs
+            /vbscript:/gi,       // VBScript protocol
+        ];
+
+        for (const pattern of dangerousPatterns) {
+            if (pattern.test(fileContent)) {
+                res.status(400).json({ message: 'Content contains potentially dangerous patterns' });
+                return;
+            }
+        }
+
+        // Parse and validate markdown content
         try {
-            const { data: frontMatter } = matter(fileContent);
+            const { content, data: frontMatter } = matter(fileContent);
+            
+            // Validate markdown content
+            const md = new MarkdownIt('default', {
+                html: true,        // Enable HTML tags
+                linkify: true,      // Convert URL-like text to links
+                typographer: true,  // Enable some language-neutral replacement + quotes beautification
+            });
+
+            try {
+                const result = md.parse(content, {});
+                if (!result || result.length === 0) {
+                    res.status(400).json({ message: 'Invalid or empty markdown content' });
+                    return;
+                }
+            } catch (error) {
+                console.error('Markdown parsing error:', error);
+                res.status(400).json({ message: 'Invalid markdown content' });
+                return;
+            }
             
             // Validate required front matter fields
-            if (!frontMatter.title) {
-                res.status(400).json({ message: 'Front matter must include a title' });
+            if (!frontMatter.title || typeof frontMatter.title !== 'string') {
+                res.status(400).json({ message: 'Front matter must include a valid title' });
                 return;
             }
 
-            // Process labels if present
-            if (frontMatter.labels) {
-                frontMatter.labels = processLabels(frontMatter.labels);
+            // Validate title length and characters
+            if (frontMatter.title.length > 200 || !/^[\w\s\-.,!?()]+$/.test(frontMatter.title)) {
+                res.status(400).json({ message: 'Invalid title format or length' });
+                return;
             }
 
-            // Parse author if present
+            // Process and validate labels if present
+            if (frontMatter.labels) {
+                if (typeof frontMatter.labels !== 'string' && !Array.isArray(frontMatter.labels)) {
+                    res.status(400).json({ message: 'Labels must be a string or array' });
+                    return;
+                }
+                try {
+                    frontMatter.labels = processLabels(frontMatter.labels);
+                    // Validate each label
+                    if (!frontMatter.labels.every((label: string) => 
+                        typeof label === 'string' && 
+                        label.length <= 50 && 
+                        /^[\w\-\s]+$/.test(label)
+                    )) {
+                        res.status(400).json({ message: 'Invalid label format' });
+                        return;
+                    }
+                } catch (error) {
+                    res.status(400).json({ message: 'Error processing labels' });
+                    return;
+                }
+            }
+
+            // Parse and validate author if present
             if (frontMatter.author) {
                 try {
                     const authorData = parseAuthor(frontMatter.author);
@@ -100,23 +168,46 @@ export const uploadMarkdown = async (req: Request, res: Response): Promise<void>
                 }
             }
 
-            // Create filename from title
-            const fileName = frontMatter.title
+            // Sanitize and validate filename
+            const sanitizedTitle = frontMatter.title
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, '-')
-                .replace(/(^-|-$)/g, '') + '.md';
+                .replace(/(^-|-$)/g, '')
+                .substring(0, 100); // Limit filename length
 
-            // Save file to content/posts directory
-            const postsDir = path.join(process.cwd(), 'content', 'posts');
-            
-            // Create posts directory if it doesn't exist
-            if (!fs.existsSync(postsDir)) {
-                fs.mkdirSync(postsDir, { recursive: true });
+            const fileName = sanitizedTitle + '.md';
+
+            // Validate file extension
+            if (!fileName.endsWith('.md')) {
+                res.status(400).json({ message: 'Only markdown files are allowed' });
+                return;
             }
 
-            const filePath = path.join(postsDir, fileName);
+            // Create and validate posts directory path
+            const postsDir = path.join(process.cwd(), 'content', 'posts');
+            const normalizedPostsDir = path.normalize(postsDir);
+            
+            // Create posts directory if it doesn't exist
+            if (!fs.existsSync(normalizedPostsDir)) {
+                fs.mkdirSync(normalizedPostsDir, { recursive: true });
+            }
 
-            fs.writeFileSync(filePath, fileContent);
+            // Validate final file path to prevent directory traversal
+            const filePath = path.join(normalizedPostsDir, fileName);
+            const normalizedFilePath = path.normalize(filePath);
+            
+            if (!normalizedFilePath.startsWith(normalizedPostsDir)) {
+                res.status(400).json({ message: 'Invalid file path' });
+                return;
+            }
+
+            // Sanitize file content
+            const sanitizedContent = matter.stringify(
+                matter(fileContent).content,
+                frontMatter
+            );
+
+            await fs.promises.writeFile(normalizedFilePath, sanitizedContent, 'utf-8');
 
             res.json({
                 message: 'File uploaded successfully',
