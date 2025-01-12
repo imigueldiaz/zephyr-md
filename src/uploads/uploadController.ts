@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { isValidMarkdown } from './validators';
 import { validationResult } from 'express-validator';
 import fs from 'fs';
 import path from 'path';
@@ -73,6 +74,12 @@ export const uploadMarkdown = async (req: Request, res: Response): Promise<void>
 
         const fileContent = req.file.buffer.toString('utf-8');
 
+        // Validate file content
+        if (!isValidMarkdown(fileContent)) {
+            res.status(400).json({ message: 'Invalid markdown file content' });
+            return;
+        }
+
         // Validate front matter
         try {
             const { data: frontMatter } = matter(fileContent);
@@ -132,3 +139,4 @@ export const uploadMarkdown = async (req: Request, res: Response): Promise<void>
         res.status(500).json({ message: 'Error uploading file' });
     }
 };
+
