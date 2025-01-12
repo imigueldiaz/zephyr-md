@@ -106,14 +106,27 @@ export async function initialize() {
     next();
   });
 
+  // Routes
   app.get('/', async (req, res) => {
     try {
       const posts = await markdownProcessor.getAllPosts();
       const html = await templateEngine.renderIndex(posts);
       res.send(html);
     } catch (error) {
-      console.error('Error rendering index:', error);
-      res.status(500).send('Error rendering index');
+      logger.error('Error rendering index:', error);
+      res.status(500).send('Internal Server Error');
+    }
+  });
+
+  app.get('/tags/:tag', async (req, res) => {
+    try {
+      const tag = req.params.tag;
+      const posts = await markdownProcessor.getPostsByTag(tag);
+      const html = await templateEngine.renderTagPage(tag, posts);
+      res.send(html);
+    } catch (error) {
+      logger.error('Error rendering tag page:', error);
+      res.status(500).send('Internal Server Error');
     }
   });
 

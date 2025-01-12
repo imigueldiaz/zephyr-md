@@ -24,6 +24,10 @@
     --code-type: #4ec9b0;
     --code-bg: #1e1e1e;
     --code-text: #d4d4d4;
+    --post-label-bg: #f3f4f6;
+    --post-label-color: #374151;
+    --post-label-hover-bg: #e5e7eb;
+    --post-label-hover-color: #111827;
 }
 
 /* Light theme (default) */
@@ -64,6 +68,10 @@
     --code-type: #4ec9b0;
     --code-bg: #1e1e1e;
     --code-text: #d4d4d4;
+    --post-label-bg: #1e293b;
+    --post-label-color: #e2e8f0;
+    --post-label-hover-bg: #2d3748;
+    --post-label-hover-color: #f8fafc;
 }
 
 /* Auto theme - follows system preference */
@@ -82,6 +90,10 @@
         --label-color: #aaa;
         --label-hover-bg: #3a3a3a;
         --label-hover-color: #fff;
+        --post-label-bg: #1e293b;
+        --post-label-color: #e2e8f0;
+        --post-label-hover-bg: #2d3748;
+        --post-label-hover-color: #f8fafc;
     }
 }
 
@@ -982,6 +994,31 @@ li {
 .posts-list > h1 {
     font-size: 2.25rem;
     margin-top: 0;
+}
+
+/* Common styles for tags and labels */
+.post-tags, .post-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag, .post-label {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    background-color: var(--post-label-bg);
+    color: var(--post-label-color);
+    transition: all 0.2s ease-in-out;
+}
+
+.tag:hover, .post-label:hover {
+    background-color: var(--post-label-hover-bg);
+    color: var(--post-label-hover-color);
+    text-decoration: none;
 }
 
 /* Back to top button */

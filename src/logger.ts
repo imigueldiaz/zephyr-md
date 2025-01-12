@@ -52,6 +52,22 @@ class Logger {
         }
     }
 
+    public info(...args: any[]): void {
+        this.log('INFO', ...args);
+    }
+
+    public error(...args: any[]): void {
+        this.log('ERROR', ...args);
+    }
+
+    public warn(...args: any[]): void {
+        this.log('WARN', ...args);
+    }
+
+    public debug(...args: any[]): void {
+        this.log('DEBUG', ...args);
+    }
+
     close(): void {
         this.logStream.end();
     }

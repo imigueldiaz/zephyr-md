@@ -75,6 +75,22 @@ export class MarkdownProcessor {
         }
     }
 
+    async getPostsByTag(tag: string): Promise<BlogPost[]> {
+        try {
+            const allPosts = await this.getAllPosts();
+            
+            const filteredPosts = allPosts.filter(post => 
+                post.labels && 
+                post.labels.map(label => label.toLowerCase()).includes(tag.toLowerCase())
+            );
+            
+            return filteredPosts;
+        } catch (error) {
+            console.error('Error getting posts by tag:', error);
+            return [];
+        }
+    }
+
     private sanitizePath(filePath: string): string {
         // Normalize the path and ensure it's within contentDir
         const normalizedPath = normalize(filePath);

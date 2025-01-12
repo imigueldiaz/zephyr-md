@@ -38,6 +38,7 @@ interface BlogPost {
     date: Date | string;
     excerpt: string;
     language?: string;
+    labels?: string[];
 }
 
 type HandlebarsTemplateDelegate = (data: TemplateData) => string;
@@ -65,15 +66,26 @@ export class TemplateEngine {
     }
 
     private async loadTemplate(name: string): Promise<HandlebarsTemplateDelegate> {
-        if (this.templateCache.has(name)) {
-            return this.templateCache.get(name)!;
-        }
+        try {
+            if (this.templateCache.has(name)) {
+                return this.templateCache.get(name)!;
+            }
 
-        const templatePath = join(__dirname, `../templates/${this.config.site.siteTheme}/${name}.html`);
-        const templateContent = await readFile(templatePath, 'utf-8');
-        const template = Handlebars.compile(templateContent);
-        this.templateCache.set(name, template);
-        return template;
+            const templatePath = join(__dirname, `../templates/${this.config.site.siteTheme}/${name}.html`);
+            const templateContent = await readFile(templatePath, 'utf-8');
+            
+            // Register base template as a partial if it's not already registered
+            if (name === 'base') {
+                Handlebars.registerPartial('base', templateContent);
+            }
+            
+            const template = Handlebars.compile(templateContent);
+            this.templateCache.set(name, template);
+            return template;
+        } catch (error) {
+            console.error(`Error loading template ${name}:`, error);
+            throw error;
+        }
     }
 
     async renderTemplate(name: string, data: TemplateData = {}): Promise<string> {
@@ -83,7 +95,7 @@ export class TemplateEngine {
             const mergedData = { ...commonData, ...data };
             
             // If it's a post or index template, wrap it in the base template
-            if (name === 'post' || name === 'index') {
+            if (name === 'post' || name === 'index' || name === 'tag') {
                 const content = template(mergedData);
                 const baseTemplate = await this.loadTemplate('base');
                 const result = baseTemplate({
@@ -195,17 +207,31 @@ export class TemplateEngine {
 
     async renderIndex(posts: BlogPost[]): Promise<string> {
         const data = {
-            posts: posts.map(post => {
-                return {
-                    title: post.title,
-                    slug: post.slug,
-                    date: post.date,
-                    date_formatted: this.formatDate(post.date),
-                    excerpt: post.excerpt
-                };
-            })
+            posts: posts.map(post => ({
+                title: post.title,
+                slug: post.slug,
+                date: post.date,
+                date_formatted: this.formatDate(post.date),
+                excerpt: post.excerpt,
+                labels: post.labels
+            }))
         };
         return this.renderTemplate('index', data);
+    }
+
+    async renderTagPage(tag: string, posts: BlogPost[]): Promise<string> {
+        const data = {
+            tag,
+            posts: posts.map(post => ({
+                title: post.title,
+                slug: post.slug,
+                date: post.date,
+                date_formatted: this.formatDate(post.date),
+                excerpt: post.excerpt,
+                labels: post.labels
+            }))
+        };
+        return this.renderTemplate('tag', data);
     }
 
     private getLanguageDisplay(language: string): { flag: string, name: string } {

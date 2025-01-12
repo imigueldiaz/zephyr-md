@@ -1,0 +1,59 @@
+/* Styles for tag pages */
+.posts-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.tag-title {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: var(--text-color);
+    text-align: center;
+}
+
+/* Post preview styles specific to tag page */
+.post-preview {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    background: var(--post-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.post-preview .post-title {
+    margin: 0 0 1rem 0;
+}
+
+.post-preview .post-title a {
+    color: var(--post-text-color);
+    text-decoration: none;
+    font-size: 1.5rem;
+    transition: color 0.2s ease-in-out;
+}
+
+.post-preview .post-title a:hover {
+    color: var(--post-link-color);
+}
+
+.post-preview .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.post-preview .post-excerpt {
+    color: var(--post-text-color);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.no-posts {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    margin: 2rem 0;
+}

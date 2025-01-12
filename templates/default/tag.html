@@ -1,0 +1,17 @@
+
+<div class="posts-container">
+  <h1 class="tag-title">Posts tagged with: {{tag}}</h1>
+  {{#each posts}}
+  <article class="post-preview">
+    <h2><a href="/posts/{{slug}}">{{title}}</a></h2>
+    <div class="post-meta">
+      <time datetime="{{date}}">{{date_formatted}}</time>
+    </div>
+    {{#if excerpt}}
+    <p class="post-excerpt">{{excerpt}}</p>
+    {{/if}}
+  </article>
+  {{else}}
+  <p class="no-posts">No posts found with this tag.</p>
+  {{/each}}
+</div>
