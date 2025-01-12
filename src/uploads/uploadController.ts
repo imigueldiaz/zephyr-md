@@ -5,6 +5,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
 import sanitizeHtml from 'sanitize-html';
+import DOMPurify from 'isomorphic-dompurify';
 import crypto from 'crypto';
 import { parse, isValid } from 'date-fns';
 import { es, enUS, fr } from 'date-fns/locale';
@@ -37,78 +38,50 @@ const getSecurePath = (baseDir: string, fileName: string): string => {
     return normalizedPath;
 };
 
-// HTML Tag patterns for security validation
+// HTML Tag patterns for security validation - Using negative lookahead for better performance
 const DANGEROUS_HTML_PATTERNS = Object.freeze([
-    // Match any HTML comments with more robust pattern
-    /<!--[\s\S]*?-->/gi,
+    // Match any HTML comments with negative lookahead
+    /<!--(?!-?>)[\s\S]*?-->/gi,
     
-    // Match script tags with better nesting handling
-    /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi,
+    // Match script tags with negative lookahead for closing tag
+    /<script\b[^>]*>(?:(?!<\/script>)[\s\S])*<\/script>/gi,
     
-    // Match style tags
-    /<style\b[^>]*>[\s\S]*?<\/style\s*>/gi,
+    // Match style tags with negative lookahead for closing tag
+    /<style\b[^>]*>(?:(?!<\/style>)[\s\S])*<\/style>/gi,
     
-    // Match potentially dangerous tags (self-closing or with content)
-    /<(iframe|object|embed|form|input|textarea|frame|frameset|applet|meta|base|link|svg)\b[^>]*>[\s\S]*?(?:<\/\1\s*>)?/gi,
+    // Match potentially dangerous tags with better structure
+    /<(?:iframe|object|embed|form|input|textarea|frame|frameset|applet|meta|base|link|svg)\b(?:[^>]|"[^"]*"|'[^']*')*>/gi,
     
-    // Match on* event handlers
-    /\bon[a-z]+\s*=\s*["']?[^"'\s>]+/gi,
+    // Match on* event handlers with word boundaries
+    /\bon[a-z]+\b\s*=\s*(?:"[^"]*"|'[^']*'|\S+)/gi,
     
-    // Match dangerous protocols in attributes
-    /(?:javascript|data|vbscript|file|blob):/gi,
+    // Match dangerous protocols in attributes with word boundaries
+    /\b(?:javascript|data|vbscript|file|blob):/gi,
     
-    // Match potentially dangerous attributes
+    // Match dangerous functions with word boundaries
     /\b(?:eval|setTimeout|setInterval|Function|execScript)\s*\(/gi,
     
-    // Match src/href with javascript
-    /(?:src|href)\s*=\s*["']?\s*javascript:/gi,
+    // Match src/href with javascript with word boundaries
+    /(?:src|href)\s*=\s*(?:"[^"]*\bjavascript:[^"]*"|'[^']*\bjavascript:[^']*')/gi,
     
-    // Match expression(...) in style attributes
-    /expression\s*\([^)]*\)/gi,
+    // Match expression(...) in style with word boundaries
+    /\bexpression\s*\([^)]*\)/gi,
     
-    // Match behavior property in style
-    /behavior\s*:\s*[^;]*/gi,
+    // Match behavior property in style with word boundaries
+    /\bbehavior\s*:\s*[^;]*/gi,
     
-    // Match -moz-binding in style
-    /-moz-binding\s*:\s*[^;]*/gi,
+    // Match -moz-binding in style with word boundaries
+    /\b-moz-binding\s*:\s*[^;]*/gi,
 
-    // Server-side includes
-    /<!--#(?:include|exec|echo|config|fsize|flastmod|printenv)\b[^>]*-->/gi
+    // Match server-side includes with specific commands
+    /<!--#(?:include|exec|echo|config|fsize|flastmod|printenv)\b[^>]*-->/gi,
+    
+    // Match potentially dangerous data attributes
+    /\bdata-\w+\s*=\s*(?:"[^"]*"|'[^']*'|\S+)/gi
 ]);
 
-// Safe inline styles pattern
-const SAFE_STYLE_PATTERN = /^(?:\s*(?:color|background-color|font-size|font-weight|text-align|margin|padding|border|width|height|display|float|clear|overflow|visibility|position|top|right|bottom|left|z-index|opacity)\s*:\s*[^;]*;\s*)*$/i;
-
-/**
- * Validate content against dangerous HTML patterns
- * @throws {Error} If dangerous HTML is detected
- */
-function validateAgainstDangerousHTML(content: string): void {
-    for (const pattern of DANGEROUS_HTML_PATTERNS) {
-        if (pattern.test(content)) {
-            const match = content.match(pattern);
-            throw new Error(`Dangerous HTML pattern detected: ${match ? match[0].substring(0, 50) : 'unknown pattern'}`);
-        }
-    }
-}
-
-/**
- * Validate style attribute content
- * @throws {Error} If unsafe style is detected
- */
-function validateStyle(style: string): void {
-    if (!SAFE_STYLE_PATTERN.test(style)) {
-        throw new Error('Unsafe style attributes detected');
-    }
-}
-
-// Markdown configuration
-const mdConfig = Object.freeze({
-    html: false,
-    linkify: true,
-    typographer: true,
-    maxNesting: 20
-});
+// Safe inline styles pattern with word boundaries and specific values
+const SAFE_STYLE_PATTERN = /^(?:\s*(?:(?:color|background-color)\s*:\s*(?:#[0-9a-f]{3,6}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(?:0|1|0?\.\d+)\s*\)|[a-z-]+)|(?:font-size|margin|padding)\s*:\s*\d+(?:px|em|rem|%)|(?:font-weight)\s*:\s*(?:normal|bold|\d00)|(?:text-align)\s*:\s*(?:left|right|center|justify)|(?:display)\s*:\s*(?:block|inline|inline-block|none)|(?:visibility)\s*:\s*(?:visible|hidden)|(?:overflow)\s*:\s*(?:hidden|visible|auto|scroll))\s*;)*\s*$/i;
 
 // Sanitization configuration
 const sanitizeConfig = Object.freeze({
@@ -129,6 +102,74 @@ const sanitizeConfig = Object.freeze({
     },
     allowedSchemesAppliedToAttributes: ['href', 'src'],
     allowProtocolRelative: false
+});
+
+/**
+ * Multi-layer content sanitization
+ * @param content Content to sanitize
+ * @returns Sanitized content
+ */
+function sanitizeContent(content: string): string {
+    // First layer: DOMPurify with strict config
+    const domPurifyConfig = {
+        ALLOWED_TAGS: [],
+        ALLOWED_ATTR: [],
+        KEEP_CONTENT: true,
+        RETURN_DOM_FRAGMENT: false,
+        RETURN_DOM: false,
+        FORCE_BODY: false
+    };
+    
+    let sanitized = DOMPurify.sanitize(content, domPurifyConfig);
+    
+    // Second layer: sanitize-html with our config
+    sanitized = sanitizeHtml(sanitized, sanitizeConfig);
+    
+    // Third layer: custom regex patterns
+    for (const pattern of DANGEROUS_HTML_PATTERNS) {
+        sanitized = sanitized.replace(pattern, '');
+    }
+    
+    return sanitized;
+}
+
+/**
+ * Validate content against dangerous patterns
+ * @throws {Error} If dangerous content is detected
+ */
+function validateContent(content: string): void {
+    // First check: dangerous patterns
+    for (const pattern of DANGEROUS_HTML_PATTERNS) {
+        pattern.lastIndex = 0; // Reset regex state
+        if (pattern.test(content)) {
+            const match = content.match(pattern);
+            throw new Error(`Dangerous pattern detected: ${match ? match[0].substring(0, 50) : 'unknown pattern'}`);
+        }
+    }
+    
+    // Second check: DOMPurify
+    const purified = DOMPurify.sanitize(content, { RETURN_DOM_FRAGMENT: true });
+    if (purified.textContent !== content) {
+        throw new Error('Content contains potentially dangerous HTML');
+    }
+}
+
+/**
+ * Validate style attribute content
+ * @throws {Error} If unsafe style is detected
+ */
+function validateStyle(style: string): void {
+    if (!SAFE_STYLE_PATTERN.test(style)) {
+        throw new Error('Unsafe style attributes detected');
+    }
+}
+
+// Markdown configuration
+const mdConfig = Object.freeze({
+    html: false,
+    linkify: true,
+    typographer: true,
+    maxNesting: 20
 });
 
 // Validation patterns for front matter
@@ -309,7 +350,7 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
             return;
         }
 
-        const fileContent = req.file.buffer.toString('utf-8');
+        let fileContent = req.file.buffer.toString('utf-8');
 
         // Basic content validation
         if (fileContent.length > MAX_FILE_SIZE) {
@@ -320,13 +361,25 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
             return;
         }
 
-        // Pre-validate content for dangerous HTML
+        // Pre-validate and sanitize content
         try {
-            validateAgainstDangerousHTML(fileContent);
+            validateContent(fileContent);
+            const sanitizedContent = sanitizeContent(fileContent);
+            
+            if (sanitizedContent.length < fileContent.length * 0.8) {
+                res.status(400).json({
+                    message: 'Content contains too many unsafe elements',
+                    details: 'Please remove HTML and ensure content is primarily markdown'
+                });
+                return;
+            }
+            
+            // Update fileContent with sanitized version
+            fileContent = sanitizedContent;
         } catch (err) {
             if (err instanceof Error) {
                 res.status(400).json({
-                    message: 'Content contains dangerous HTML',
+                    message: 'Content validation failed',
                     details: err.message
                 });
                 return;
@@ -339,7 +392,7 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
         if (preCheck) {
             const rawFrontMatter = preCheck[1];
             try {
-                validateAgainstDangerousHTML(rawFrontMatter);
+                validateContent(rawFrontMatter);
             } catch (err) {
                 if (err instanceof Error) {
                     res.status(400).json({
