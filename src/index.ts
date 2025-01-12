@@ -8,6 +8,10 @@ import { mkdir } from 'fs/promises';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { readFile } from 'fs/promises';
+import { login, loginValidation } from './auth/authController';
+import { verifyToken } from './auth/authMiddleware';
+import { upload } from './uploads/uploadMiddleware';
+import { uploadMarkdown } from './uploads/uploadController';
 
 export async function initialize() {
   // Crear directorio de logs si no existe
@@ -36,6 +40,47 @@ export async function initialize() {
   const contentDir = join(__dirname, '../content');
   const themeFolder = config.site.siteTheme;
 
+  // Middleware de seguridad
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "https://kit.fontawesome.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "cdnjs.cloudflare.com", "https://kit.fontawesome.com"],
+        imgSrc: ["'self'", "data:", "https:", "https://kit.fontawesome.com"],
+        fontSrc: ["'self'", "fonts.gstatic.com", "fonts.googleapis.com", "cdnjs.cloudflare.com", "https://kit.fontawesome.com"],
+        connectSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+        childSrc: ["'none'"],
+        workerSrc: ["'none'"],
+        manifestSrc: ["'self'"],
+        formAction: ["'self'"],
+        baseUri: ["'self'"],
+        frameAncestors: ["'self'"],
+        scriptSrcAttr: ["'none'"],
+        upgradeInsecureRequests: []
+      }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+  }));
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  // Rate limiting
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100 // límite de 100 peticiones por ventana
+  });
+  app.use('/api', limiter);
+
+  // Rutas de autenticación y subida de archivos
+  app.post('/api/auth/login', loginValidation, login);
+  app.post('/api/upload', verifyToken, upload.single('file'), uploadMarkdown);
+
   // Serve static files
   app.use('/public', express.static(join(__dirname, '../public')));
   app.use('/styles', express.static(join(__dirname, '../templates', themeFolder, 'css')));
@@ -48,52 +93,6 @@ export async function initialize() {
     scripts: join(__dirname, '../templates', themeFolder, 'js'),
     theme: config.site.siteTheme
   });
-
-  // Add security headers with helmet
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          'cdnjs.cloudflare.com'
-        ],
-        styleSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          'fonts.googleapis.com',
-          'cdnjs.cloudflare.com'
-        ],
-        imgSrc: ["'self'", "data:", "https:"],
-        fontSrc: ["'self'", "fonts.gstatic.com", "fonts.googleapis.com"],
-        connectSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        mediaSrc: ["'self'"],
-        frameSrc: ["'none'"],
-        childSrc: ["'none'"],
-        workerSrc: ["'none'"],
-        manifestSrc: ["'self'"],
-        formAction: ["'self'"],
-        baseUri: ["'self'"],
-      },
-    },
-    crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "same-origin" },
-  }));
-
-  // Add rate limiting
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.',
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
-
-  // Apply rate limiting to all routes
-  app.use(limiter);
 
   // Initialize services
   const markdownProcessor = new MarkdownProcessor(contentDir);

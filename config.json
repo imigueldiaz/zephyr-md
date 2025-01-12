@@ -25,5 +25,15 @@
     "theme": {
         "defaultMode": "auto",
         "accentColor": "#2563eb"
+    },
+    "auth": {
+        "jwtSecret": "0833340f5a73ab76919cebb3c486ef3c65665d09e835608e5d8363ce2314ed396e265f1fbc73c46ed80e1f28e0dcd51ca730e719148ed1f239b3e91c9f98b638",
+        "jwtExpiresIn": "1h",
+        "users": [
+            {
+                "username": "admin",
+                "password": "$2a$10$ftul3XevQefRWBGOVkSarelVrG3kYDmK/zNfpNQNHK.7xW6/11oEu"
+            }
+        ]
     }
 }

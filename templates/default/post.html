@@ -7,7 +7,19 @@
             <span class="post-language" title="{{post.language.name}}">{{post.language.flag}}</span>
             {{/if}}
         </div>
-        {{#if post.labels.length}}
+        {{#if post.author}}
+        <div class="post-author">
+            <span class="author-info">
+                <i class="fas fa-user"></i>
+                {{#if post.author.email}}
+                <a href="mailto:{{post.author.email}}" class="author-link">{{post.author.name}}</a>
+                {{else}}
+                <span class="author-name">{{post.author.name}}</span>
+                {{/if}}
+            </span>
+        </div>
+        {{/if}}
+        {{#if post.labels}}
         <div class="post-labels">
             {{#each post.labels}}
             <a href="/tags/{{this}}" class="post-label">{{this}}</a>

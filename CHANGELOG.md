@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Authentication and File Upload System (2025-01-12)
+  - Added authentication system with JWT tokens
+  - Created login endpoint and middleware
+  - Implemented secure file upload functionality
+  - Added password generation script
+  - Created upload controllers and middleware
 - Tag pages feature (2025-01-11)
   - Added `/tags/:tag` route to display posts by tag
   - Created new tag page template

@@ -27,7 +27,8 @@ A modern, lightweight static site generator focused on markdown-based blogging w
 - ♿ **Accessibility**: WCAG 2.1 compliant
 - 📋 **Code Copying**: One-click code block copying
 - 🔧 **Customizable**: Easy to extend and modify
-- 🔒 **Helmet Integration**: Comprehensive security headers
+- 🔒 **Security**: JWT authentication and secure file uploads
+- 🛡️ **Helmet Integration**: Comprehensive security headers
 - 🚦 **Rate Limiting**: Protection against abuse (100 requests per 15 minutes)
 - 👤 **Non-root Docker User**: Enhanced container security
 - 🔐 **CSP Headers**: Strict Content Security Policy
