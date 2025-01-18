@@ -11,7 +11,7 @@ import { readFile } from 'fs/promises';
 import { login, loginValidation } from './auth/authController';
 import { verifyToken } from './auth/authMiddleware';
 import { upload } from './uploads/uploadMiddleware';
-import { uploadMarkdown } from './uploads/uploadController';
+import { uploadMarkdown, validateMarkdownUpload } from './uploads/uploadController';
 
 export async function initialize() {
   // Crear directorio de logs si no existe
@@ -79,7 +79,7 @@ export async function initialize() {
 
   // Rutas de autenticación y subida de archivos
   app.post('/api/auth/login', loginValidation, login);
-  app.post('/api/upload', verifyToken, upload.single('file'), uploadMarkdown);
+  app.post('/api/upload', verifyToken, validateMarkdownUpload, upload.single('file'), uploadMarkdown);
 
   // Serve static files
   app.use('/public', express.static(join(__dirname, '../public')));
