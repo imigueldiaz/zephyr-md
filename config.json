@@ -29,14 +29,6 @@
         "darkMode": true
     },
     "auth": {
-        "secret": "REPLACE_WITH_A_SECURE_SECRET_KEY",
-        "tokenExpiration": "1h",
-        "saltRounds": 10,
-        "users": [
-            {
-                "username": "REPLACE_USERNAME",
-                "passwordHash": "REPLACE_WITH_HASHED_PASSWORD"
-            }
-        ]
+        "jwtExpiresIn": "1h"
     }
 }

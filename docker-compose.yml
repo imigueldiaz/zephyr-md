@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
     ports:
       - "8585:8585"
     volumes:
@@ -13,4 +15,10 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8585
+      # Auth environment variables
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
+    env_file:
+      - .env
     restart: unless-stopped

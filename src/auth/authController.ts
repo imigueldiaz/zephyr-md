@@ -3,16 +3,43 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { body, validationResult } from 'express-validator';
 import { AuthConfig, AuthResponse, AuthUser } from './authTypes';
-import fs from 'fs';
-import path from 'path';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { TemplateEngine } from '../templateEngine';
+import { Config } from '../types';
+import dotenv from 'dotenv';
 
-// Load users from config file
+// Load environment variables
+dotenv.config();
+
+// Validate required environment variables
+const getRequiredEnvVar = (name: string): string => {
+    const value = process.env[name];
+    if (!value) {
+        throw new Error(`${name} environment variable is required`);
+    }
+    return value;
+};
+
+// Load config file
 const loadConfig = (): AuthConfig => {
     try {
-        const configPath = path.join(process.cwd(), 'config.json');
-        const configContent = fs.readFileSync(configPath, 'utf8');
+        const configPath = join(process.cwd(), 'config.json');
+        const configContent = readFileSync(configPath, 'utf8');
         const fullConfig = JSON.parse(configContent);
-        return fullConfig.auth as AuthConfig;
+        
+        // Get required environment variables
+        const jwtSecret = getRequiredEnvVar('JWT_SECRET');
+        const adminPasswordHash = getRequiredEnvVar('ADMIN_PASSWORD_HASH');
+        
+        return {
+            ...fullConfig.auth as AuthConfig,
+            jwtSecret,
+            users: [{
+                username: process.env.ADMIN_USERNAME || 'admin',
+                password: adminPasswordHash
+            }]
+        };
     } catch (error) {
         console.error('Error loading config:', error);
         throw new Error('Failed to load authentication configuration');
@@ -113,6 +140,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
         // Generate token
         const token = generateToken(username);
+        console.log('Generated token:', token);
 
         const response: AuthResponse = {
             token,
@@ -124,5 +152,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+/**
+ * Render login form
+ */
+export const renderLoginForm = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const engine = new TemplateEngine(req.app.locals.config as Config);
+        const html = await engine.renderTemplate('login', {});
+        res.send(html);
+    } catch (error) {
+        console.error('Error rendering login form:', error);
+        res.status(500).send('Error rendering login form');
     }
 };

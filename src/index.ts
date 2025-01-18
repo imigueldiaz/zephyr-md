@@ -8,10 +8,12 @@ import { mkdir } from 'fs/promises';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { readFile } from 'fs/promises';
-import { login, loginValidation } from './auth/authController';
+import { login, loginValidation, renderLoginForm } from './auth/authController';
 import { verifyToken } from './auth/authMiddleware';
 import { upload } from './uploads/uploadMiddleware';
 import { uploadMarkdown, validateMarkdownUpload } from './uploads/uploadController';
+import { renderUploadForm, handleUpload } from './admin/adminController';
+import cookieParser from 'cookie-parser';
 
 export async function initialize() {
   // Crear directorio de logs si no existe
@@ -40,33 +42,40 @@ export async function initialize() {
   const contentDir = join(__dirname, '../content');
   const themeFolder = config.site.siteTheme;
 
+  // Add config to app.locals
+  app.locals.config = config;
+
   // Middleware de seguridad
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "https://kit.fontawesome.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "cdnjs.cloudflare.com", "https://kit.fontawesome.com"],
-        imgSrc: ["'self'", "data:", "https:", "https://kit.fontawesome.com"],
-        fontSrc: ["'self'", "fonts.gstatic.com", "fonts.googleapis.com", "cdnjs.cloudflare.com", "https://kit.fontawesome.com"],
-        connectSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        mediaSrc: ["'self'"],
-        frameSrc: ["'none'"],
-        childSrc: ["'none'"],
-        workerSrc: ["'none'"],
-        manifestSrc: ["'self'"],
-        formAction: ["'self'"],
-        baseUri: ["'self'"],
-        frameAncestors: ["'self'"],
-        scriptSrcAttr: ["'none'"],
-        upgradeInsecureRequests: []
-      }
+        scriptSrc: [
+          "'self'", 
+          "'unsafe-inline'", 
+          "'unsafe-eval'",
+          "cdnjs.cloudflare.com",
+          "localhost:*"
+        ],
+        styleSrc: [
+          "'self'", 
+          "'unsafe-inline'", 
+          "cdnjs.cloudflare.com", 
+          "fonts.googleapis.com"
+        ],
+        fontSrc: [
+          "'self'", 
+          "fonts.gstatic.com", 
+          "cdnjs.cloudflare.com"
+        ],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "localhost:*"],
+      },
     },
     crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "same-origin" },
+    crossOriginResourcePolicy: false,
   }));
+  app.use(cookieParser());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
@@ -75,11 +84,13 @@ export async function initialize() {
     windowMs: 15 * 60 * 1000, // 15 minutos
     max: 100 // límite de 100 peticiones por ventana
   });
-  app.use('/api', limiter);
+  app.use(limiter);
 
   // Rutas de autenticación y subida de archivos
-  app.post('/api/auth/login', loginValidation, login);
-  app.post('/api/upload', verifyToken, validateMarkdownUpload, upload.single('file'), uploadMarkdown);
+  app.get('/admin/login', renderLoginForm);
+  app.post('/admin/auth/login', loginValidation, login);
+  app.get('/admin/upload', renderUploadForm);
+  app.post('/admin/upload', verifyToken, handleUpload);
 
   // Serve static files
   app.use('/public', express.static(join(__dirname, '../public')));
@@ -90,7 +101,7 @@ export async function initialize() {
   console.log('Static paths:', {
     public: join(__dirname, '../public'),
     styles: join(__dirname, '../templates', themeFolder, 'css'),
-    scripts: join(__dirname, '../templates', themeFolder, 'js'),
+    scripts: join(__dirname, '../templates', themeFolder, 'scripts'),
     theme: config.site.siteTheme
   });
 
@@ -100,8 +111,8 @@ export async function initialize() {
 
   // Middleware para añadir CSS común a todas las páginas
   app.use((req, res, next) => {
-    templateEngine.addCssFile(`/styles/${themeFolder}/css/base.css`);
-    templateEngine.addCssFile(`/styles/${themeFolder}/css/code.css`);
+    templateEngine.addCssFile('/styles/base.css');
+    templateEngine.addCssFile('/styles/code.css');
     next();
   });
 
@@ -131,26 +142,24 @@ export async function initialize() {
 
   app.get('/posts/:slug', async (req, res) => {
     try {
-      const post = await markdownProcessor.getPost(req.params.slug);
+      const slug = req.params.slug;
+      const post = await markdownProcessor.getPost(slug);
       if (!post) {
-        console.log('Post not found:', req.params.slug);
         res.status(404).send('Post not found');
         return;
       }
-      
       const html = await templateEngine.renderPost(post);
       res.send(html);
     } catch (error) {
-      console.error('Error rendering post:', error);
-      res.status(500).send('Error rendering post');
+      logger.error('Error rendering post:', error);
+      res.status(500).send('Internal Server Error');
     }
   });
 
-  app.listen(port, () => {
+  // Start server
+  app.listen(port, host, () => {
     console.log(`Server running at http://${host}:${port}`);
   });
-
-  return app;
 }
 
 initialize().catch(console.error);

@@ -103,6 +103,108 @@ yarn build
 
 The static site will be generated in the `dist` directory.
 
+## 🔒 Authentication and Admin Features
+
+Zephyr MD includes a secure admin interface for managing content:
+
+1. Access the login page at `/login`
+2. After authentication, you can:
+   - Upload new markdown posts through the web interface at `/upload`
+   - Access protected admin features
+   - Manage your content securely
+
+### 🐳 Docker Deployment
+
+#### Using Docker Run
+
+```bash
+docker run -d \
+  --name zephyr-md \
+  -p 8585:8585 \
+  -e JWT_SECRET=your_jwt_secret \
+  -e ADMIN_PASSWORD_HASH=your_bcrypt_hash \
+  -e ADMIN_USERNAME=admin \
+  -v $(pwd)/content:/app/content \
+  -v $(pwd)/public:/app/public \
+  -v $(pwd)/templates:/app/templates \
+  ghcr.io/imigueldiaz/zephyr-md:latest
+```
+
+#### Using Docker Compose
+
+1. Create a `.env` file:
+```bash
+# Authentication
+JWT_SECRET=your_jwt_secret
+ADMIN_PASSWORD_HASH=your_bcrypt_hash
+ADMIN_USERNAME=admin
+
+# Node Environment
+NODE_ENV=production
+PORT=8585
+```
+
+2. Run with docker-compose:
+```bash
+docker-compose up -d
+```
+
+#### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `JWT_SECRET` | Secret key for JWT token generation (required) | - |
+| `ADMIN_PASSWORD_HASH` | Bcrypt hash of admin password (required) | - |
+| `ADMIN_USERNAME` | Admin username | admin |
+| `PORT` | Server port | 8585 |
+| `NODE_ENV` | Node environment | production |
+
+#### Generating Secure Credentials
+
+1. Generate a secure JWT secret:
+```bash
+openssl rand -hex 64
+```
+
+2. Generate a bcrypt hash for your password:
+```bash
+# Using Node.js
+node -e "const bcrypt = require('bcryptjs'); bcrypt.hash('your_password', 10).then(console.log)"
+```
+
+#### Security Notes
+
+- Never store plain text passwords
+- Keep your `.env` file secure and never commit it to version control
+- Use strong passwords and a secure JWT secret
+- The admin interface is rate-limited to prevent brute force attacks
+- All uploads are validated and sanitized
+- The application runs as a non-root user in Docker for enhanced security
+
+### 📝 Creating Posts via Upload
+
+1. Log in to the admin interface at `/login`
+2. Navigate to `/upload`
+3. Select your markdown file
+4. The file will be automatically:
+   - Validated for proper markdown format
+   - Checked for required front matter
+   - Sanitized for security
+   - Added to your content directory
+   - Available immediately on your site
+
+#### Markdown Front Matter Requirements
+
+```markdown
+---
+title: Your Post Title
+date: YYYY-MM-DD
+excerpt: A brief description
+---
+
+Your content here...
+```
+
 ## 🎨 Customization
 
 ### Themes

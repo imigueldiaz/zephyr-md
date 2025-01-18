@@ -1,5 +1,15 @@
 FROM node:22-alpine3.20
 
+# Build arguments
+ARG NODE_ENV=production
+ENV NODE_ENV=$NODE_ENV
+
+# Environment variables
+ENV PORT=8585
+ENV JWT_SECRET=
+ENV ADMIN_USERNAME=admin
+ENV ADMIN_PASSWORD_HASH=
+
 # Crear un usuario no-root
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
@@ -32,5 +42,9 @@ EXPOSE 8585
 
 # Configurar volúmenes para contenido y archivos públicos
 VOLUME ["/app/content", "/app/public"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8585/ || exit 1
 
 CMD ["yarn", "start"]
