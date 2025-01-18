@@ -349,15 +349,12 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
         }
 
         // File validation is now handled by middleware
-        let fileContent = req.file!.buffer.toString('utf-8');
+        const rawContent = req.file!.buffer.toString('utf-8');
         
         // Pre-validate and sanitize content
         try {
-            validateContent(fileContent);
-            const sanitizedContent = sanitizeContent(fileContent);
-            
-            // Update fileContent with sanitized version
-            fileContent = sanitizedContent;
+            validateContent(rawContent);
+            const sanitizedContent = sanitizeContent(rawContent);
 
             // Parse with gray-matter after pre-validation
             const { content, data: frontMatter } = matter(sanitizedContent);
