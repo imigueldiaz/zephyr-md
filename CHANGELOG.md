@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented early validation middleware for file uploads (2025-01-18)
 - Centralized security constants and configurations (2025-01-18)
 - Enhanced content sanitization with multi-layer approach (2025-01-18)
+- Added precompiled markdown configuration to prevent template injection (2025-01-18)
 
 ### Added
 - Authentication and File Upload System (2025-01-12)

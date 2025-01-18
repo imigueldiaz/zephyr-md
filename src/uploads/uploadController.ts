@@ -5,10 +5,10 @@ import path from 'path';
 import matter from 'gray-matter';
 import DOMPurify from 'dompurify';
 import sanitizeHtml from 'sanitize-html';
-import MarkdownIt from 'markdown-it';
 import { parse, isValid } from 'date-fns';
 import { es, enUS, fr } from 'date-fns/locale';
 import { createHash } from 'crypto';
+import { safeMarkdown, PRECOMPILED_PATTERNS } from '../utils/markdownConfig';
 import { 
     ALLOWED_HTML_TAGS, 
     ALLOWED_HTML_ATTRS, 
@@ -165,9 +165,11 @@ function validateStyle(style: string): void {
     }
 }
 
-// Markdown configuration
+// Markdown configuration - Using precompiled safe configuration
 const mdConfig = Object.freeze({
     html: false,
+    xhtmlOut: true,
+    breaks: false,
     linkify: true,
     typographer: true,
     maxNesting: 20
@@ -356,190 +358,130 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
             
             // Update fileContent with sanitized version
             fileContent = sanitizedContent;
-        } catch (err) {
-            if (err instanceof Error) {
-                res.status(400).json({
-                    message: 'Content validation failed',
-                    details: err.message
+
+            // Parse with gray-matter after pre-validation
+            const { content, data: frontMatter } = matter(fileContent);
+            
+            // Validate front matter structure and content
+            validateFrontMatter(frontMatter);
+
+            // Generate file hash for deduplication
+            const fileHash = createHash('sha256')
+                .update(sanitizedContent)
+                .digest('hex');
+
+            // Render markdown using safe precompiled configuration
+            const renderedContent = safeMarkdown.render(content);
+
+            // Additional sanitization of rendered content
+            const sanitizedHtml = sanitizeHtml(renderedContent, sanitizeConfig);
+
+            // Verify content integrity after sanitization
+            if (sanitizedHtml.length < renderedContent.length * 0.8) {
+                res.status(400).json({ 
+                    message: 'Content contains too many unsafe elements',
+                    details: 'Please remove HTML and ensure content is primarily markdown'
                 });
                 return;
             }
-            throw err;
-        }
 
-        // Pre-validate front matter before parsing
-        const preCheck = fileContent.match(/^---\n([\s\S]*?)\n---/);
-        if (preCheck) {
-            const rawFrontMatter = preCheck[1];
+            // Validate required front matter fields
+            if (!frontMatter.title || typeof frontMatter.title !== 'string') {
+                res.status(400).json({ message: 'Front matter must include a valid title' });
+                return;
+            }
+
+            // Validate title length and characters
+            if (frontMatter.title.length > MAX_TITLE_LENGTH || !ALLOWED_CHARS_PATTERN.test(frontMatter.title)) {
+                res.status(400).json({ message: 'Invalid title format or length' });
+                return;
+            }
+
+            // Process and validate labels if present
+            if (frontMatter.labels) {
+                if (typeof frontMatter.labels !== 'string' && !Array.isArray(frontMatter.labels)) {
+                    res.status(400).json({ message: 'Labels must be a string or array' });
+                    return;
+                }
+                try {
+                    frontMatter.labels = processLabels(frontMatter.labels);
+                    // Validate each label
+                    if (!frontMatter.labels.every((label: string) => 
+                        typeof label === 'string' && 
+                        label.length <= MAX_LABEL_LENGTH && 
+                        /^[\w\-\s]+$/.test(label)
+                    )) {
+                        res.status(400).json({ message: 'Invalid label format' });
+                        return;
+                    }
+                } catch (error) {
+                    res.status(400).json({ message: 'Error processing labels' });
+                    return;
+                }
+            }
+
+            // Parse and validate author if present
+            if (frontMatter.author) {
+                try {
+                    const authorData = parseAuthor(frontMatter.author);
+                    frontMatter.author = authorData;
+                } catch (error) {
+                    console.error('Error parsing author:', error);
+                    res.status(400).json({ message: 'Invalid author format in front matter' });
+                    return;
+                }
+            }
+
+            // Generate secure filename
+            const secureTitle = frontMatter.title
+                .toLowerCase()
+                .replace(/[^a-z0-9-]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '')
+                .substring(0, 100);
+
+            const fileName = `${secureTitle}-${fileHash.substring(0, 8)}.md`;
+
+            if (!SAFE_FILENAME_PATTERN.test(fileName)) {
+                res.status(400).json({ 
+                    message: 'Invalid filename generated'
+                });
+                return;
+            }
+
+            // Secure path handling
+            const postsDir = path.join(process.cwd(), 'content', 'posts');
+            await fs.mkdir(postsDir, { recursive: true });
+
             try {
-                validateContent(rawFrontMatter);
+                const filePath = getSecurePath(postsDir, fileName);
+                const sanitizedContent = matter.stringify(content, frontMatter);
+                await fs.writeFile(filePath, sanitizedContent, { 
+                    encoding: 'utf-8',
+                    flag: 'wx' // Fail if file exists
+                });
+
+                res.json({
+                    message: 'File uploaded successfully',
+                    fileName,
+                    fileHash,
+                    frontMatter
+                });
+                return;
             } catch (err) {
-                if (err instanceof Error) {
-                    res.status(400).json({
-                        message: 'Front matter contains dangerous HTML',
-                        details: err.message
+                if (err instanceof Error && err.message.includes('EEXIST')) {
+                    res.status(409).json({ 
+                        message: 'File already exists'
                     });
                     return;
                 }
                 throw err;
             }
-        }
-
-        // Pre-validate content for potential code injection
-        const sanitizedContent = sanitizeContent(fileContent);
-        
-        // Parse with gray-matter after pre-validation
-        const { content, data: frontMatter } = matter(sanitizedContent);
-        
-        // Validate front matter structure and content
-        try {
-            validateFrontMatter(frontMatter);
         } catch (err) {
             if (err instanceof Error) {
                 res.status(400).json({
-                    message: 'Invalid front matter',
+                    message: 'Content validation failed',
                     details: err.message
-                });
-                return;
-            }
-            throw err;
-        }
-
-        // Generate file hash for deduplication
-        const fileHash = createHash('sha256')
-            .update(sanitizedContent)
-            .digest('hex');
-
-        // Validate markdown content
-        const md = new MarkdownIt('zero', mdConfig);
-
-        // Add only safe markdown features
-        md.enable([
-            'heading',
-            'lheading',
-            'paragraph',
-            'blockquote',
-            'list',
-            'bullet',
-            'reference',
-            'emphasis',
-            'link',
-            'image',
-            'code',
-            'fence',
-            'hr',
-            'softbreak',
-            'hardbreak'
-        ]);
-
-        const result = md.parse(content, {});
-        if (!result || result.length === 0) {
-            res.status(400).json({ 
-                message: 'Invalid or empty markdown content'
-            });
-            return;
-        }
-
-        // Additional sanitization of rendered content
-        const renderedContent = md.render(content);
-        const sanitizedHtml = sanitizeHtml(renderedContent, sanitizeConfig);
-
-        // Verify content integrity after sanitization
-        if (sanitizedHtml.length < renderedContent.length * 0.8) {
-            res.status(400).json({ 
-                message: 'Content contains too many unsafe elements',
-                details: 'Please remove HTML and ensure content is primarily markdown'
-            });
-            return;
-        }
-
-        // Validate required front matter fields
-        if (!frontMatter.title || typeof frontMatter.title !== 'string') {
-            res.status(400).json({ message: 'Front matter must include a valid title' });
-            return;
-        }
-
-        // Validate title length and characters
-        if (frontMatter.title.length > MAX_TITLE_LENGTH || !ALLOWED_CHARS_PATTERN.test(frontMatter.title)) {
-            res.status(400).json({ message: 'Invalid title format or length' });
-            return;
-        }
-
-        // Process and validate labels if present
-        if (frontMatter.labels) {
-            if (typeof frontMatter.labels !== 'string' && !Array.isArray(frontMatter.labels)) {
-                res.status(400).json({ message: 'Labels must be a string or array' });
-                return;
-            }
-            try {
-                frontMatter.labels = processLabels(frontMatter.labels);
-                // Validate each label
-                if (!frontMatter.labels.every((label: string) => 
-                    typeof label === 'string' && 
-                    label.length <= MAX_LABEL_LENGTH && 
-                    /^[\w\-\s]+$/.test(label)
-                )) {
-                    res.status(400).json({ message: 'Invalid label format' });
-                    return;
-                }
-            } catch (error) {
-                res.status(400).json({ message: 'Error processing labels' });
-                return;
-            }
-        }
-
-        // Parse and validate author if present
-        if (frontMatter.author) {
-            try {
-                const authorData = parseAuthor(frontMatter.author);
-                frontMatter.author = authorData;
-            } catch (error) {
-                console.error('Error parsing author:', error);
-                res.status(400).json({ message: 'Invalid author format in front matter' });
-                return;
-            }
-        }
-
-        // Generate secure filename
-        const secureTitle = frontMatter.title
-            .toLowerCase()
-            .replace(/[^a-z0-9-]/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '')
-            .substring(0, 100);
-
-        const fileName = `${secureTitle}-${fileHash.substring(0, 8)}.md`;
-
-        if (!SAFE_FILENAME_PATTERN.test(fileName)) {
-            res.status(400).json({ 
-                message: 'Invalid filename generated'
-            });
-            return;
-        }
-
-        // Secure path handling
-        const postsDir = path.join(process.cwd(), 'content', 'posts');
-        await fs.mkdir(postsDir, { recursive: true });
-
-        try {
-            const filePath = getSecurePath(postsDir, fileName);
-            const sanitizedContent = matter.stringify(content, frontMatter);
-            await fs.writeFile(filePath, sanitizedContent, { 
-                encoding: 'utf-8',
-                flag: 'wx' // Fail if file exists
-            });
-
-            res.json({
-                message: 'File uploaded successfully',
-                fileName,
-                fileHash,
-                frontMatter
-            });
-            return;
-        } catch (err) {
-            if (err instanceof Error && err.message.includes('EEXIST')) {
-                res.status(409).json({ 
-                    message: 'File already exists'
                 });
                 return;
             }
