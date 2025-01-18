@@ -3,12 +3,18 @@ import { validationResult } from 'express-validator';
 import fs from 'fs/promises';
 import path from 'path';
 import matter from 'gray-matter';
-import MarkdownIt from 'markdown-it';
+import DOMPurify from 'dompurify';
 import sanitizeHtml from 'sanitize-html';
-import DOMPurify from 'isomorphic-dompurify';
-import crypto from 'crypto';
+import MarkdownIt from 'markdown-it';
 import { parse, isValid } from 'date-fns';
 import { es, enUS, fr } from 'date-fns/locale';
+import { createHash } from 'crypto';
+import { 
+    ALLOWED_HTML_TAGS, 
+    ALLOWED_HTML_ATTRS, 
+    SAFE_TARGET_VALUES,
+    ALLOWED_PROTOCOLS 
+} from '../constants';
 
 interface Author {
     name: string;
@@ -85,23 +91,14 @@ const SAFE_STYLE_PATTERN = /^(?:\s*(?:(?:color|background-color)\s*:\s*(?:#[0-9a
 
 // Sanitization configuration
 const sanitizeConfig = Object.freeze({
-    allowedTags: [
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'p', 'ul', 'ol', 'li', 'blockquote',
-        'pre', 'code', 'em', 'strong', 'a', 'img',
-        'hr', 'br'
-    ],
+    allowedTags: ALLOWED_HTML_TAGS,
     allowedAttributes: {
-        'a': ['href'],
-        'img': ['src', 'alt']
+        a: ALLOWED_HTML_ATTRS
     },
-    allowedSchemes: ['http', 'https'],
-    allowedSchemesByTag: {
-        img: ['http', 'https'],
-        a: ['http', 'https']
-    },
+    allowedSchemes: ALLOWED_PROTOCOLS,
     allowedSchemesAppliedToAttributes: ['href', 'src'],
-    allowProtocolRelative: false
+    allowProtocolRelative: false,
+    allowedTargets: SAFE_TARGET_VALUES
 });
 
 /**
@@ -349,34 +346,13 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
             return;
         }
 
-        if (!req.file) {
-            res.status(400).json({ message: 'No file uploaded' });
-            return;
-        }
-
-        let fileContent = req.file.buffer.toString('utf-8');
-
-        // Basic content validation
-        if (fileContent.length > MAX_FILE_SIZE) {
-            res.status(400).json({ 
-                message: 'File too large',
-                details: `Maximum file size is ${MAX_FILE_SIZE / 1024}KB`
-            });
-            return;
-        }
-
+        // File validation is now handled by middleware
+        let fileContent = req.file!.buffer.toString('utf-8');
+        
         // Pre-validate and sanitize content
         try {
             validateContent(fileContent);
             const sanitizedContent = sanitizeContent(fileContent);
-            
-            if (sanitizedContent.length < fileContent.length * 0.8) {
-                res.status(400).json({
-                    message: 'Content contains too many unsafe elements',
-                    details: 'Please remove HTML and ensure content is primarily markdown'
-                });
-                return;
-            }
             
             // Update fileContent with sanitized version
             fileContent = sanitizedContent;
@@ -429,10 +405,9 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
             throw err;
         }
 
-        // Create hash of content for integrity check
-        const contentHash = crypto
-            .createHash('sha256')
-            .update(content)
+        // Generate file hash for deduplication
+        const fileHash = createHash('sha256')
+            .update(sanitizedContent)
             .digest('hex');
 
         // Validate markdown content
@@ -533,7 +508,7 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
             .replace(/^-|-$/g, '')
             .substring(0, 100);
 
-        const fileName = `${secureTitle}-${contentHash.substring(0, 8)}.md`;
+        const fileName = `${secureTitle}-${fileHash.substring(0, 8)}.md`;
 
         if (!SAFE_FILENAME_PATTERN.test(fileName)) {
             res.status(400).json({ 
@@ -557,7 +532,7 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
             res.json({
                 message: 'File uploaded successfully',
                 fileName,
-                contentHash,
+                fileHash,
                 frontMatter
             });
             return;
