@@ -43,19 +43,17 @@ export const validateMarkdownUpload = (req: Request, res: Response, next: NextFu
 };
 
 function validateContent(content: string): boolean {
-    // Check for potentially dangerous patterns
-    const dangerousPatterns = [
-        /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-        /javascript:/gi,
-        /data:/gi,
-        /vbscript:/gi,
-        /on\w+\s*=/gi,
-        /document\./gi,
-        /\$\{.*\}/g // Template literal injection
-    ];
+    // Sanitize content using sanitize-html
+    const sanitized = sanitizeHtml(content, {
+        allowedTags: [],
+        allowedAttributes: {},
+        disallowedTagsMode: 'discard',
+        enforceHtmlBoundary: true,
+        parseStyleAttributes: false
+    });
 
-    // Check if content contains any dangerous patterns
-    return !dangerousPatterns.some(pattern => pattern.test(content));
+    // Check if sanitized content is different from the original content
+    return sanitized === content;
 }
 
 function sanitizeContent(content: string): string {
