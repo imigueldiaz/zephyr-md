@@ -405,8 +405,11 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
             }
         }
 
+        // Pre-validate content for potential code injection
+        const sanitizedContent = sanitizeContent(fileContent);
+        
         // Parse with gray-matter after pre-validation
-        const { content, data: frontMatter } = matter(fileContent);
+        const { content, data: frontMatter } = matter(sanitizedContent);
         
         // Validate front matter structure and content
         try {
