@@ -356,11 +356,13 @@ export async function uploadMarkdown(req: Request, res: Response): Promise<void>
             validateContent(rawContent);
             const sanitizedContent = sanitizeContent(rawContent);
 
-            // Parse with gray-matter after pre-validation
-            const { content, data: frontMatter } = matter(sanitizedContent);
-            
-            // Validate front matter structure and content
-            validateFrontMatter(frontMatter);
+            // Safely parse front matter first
+            const parsedData = matter(rawContent);
+            validateFrontMatter(parsedData.data);
+
+            // Then combine sanitized content with validated front matter
+            const content = sanitizedContent;
+            const frontMatter = parsedData.data;
 
             // Generate file hash for deduplication
             const fileHash = createHash('sha256')
