@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, ValidationChain } from 'express-validator';
 import { MAX_FILE_SIZE, MAX_TITLE_LENGTH, MAX_LABEL_LENGTH } from '../constants';
-
+import DOMPurify from 'dompurify';
 /**
  * Validation chains for markdown upload
  */
@@ -75,23 +75,14 @@ export function validateFileUpload(req: Request, res: Response, next: NextFuncti
             return res.status(400).json({ message: 'File is empty' });
         }
 
-        // Check for potentially malicious content early
-        const dangerousPatterns = [
-            /\${.*?}/g,  // Template string interpolation
-            /`.*?`/g,    // Template literals
-            /<script.*?>.*?<\/script>/gis,  // Script tags
-            /javascript:/gi,  // JavaScript protocol
-            /data:/gi,   // Data URLs
-            /vbscript:/gi // VBScript protocol
-        ];
+        // Sanitize file content using DOMPurify
+        const sanitizedContent = DOMPurify.sanitize(fileContent);
 
-        for (const pattern of dangerousPatterns) {
-            if (pattern.test(fileContent)) {
-                return res.status(400).json({ 
-                    message: 'Invalid content detected',
-                    details: 'File contains potentially malicious content'
-                });
-            }
+        if (sanitizedContent !== fileContent) {
+            return res.status(400).json({ 
+                message: 'Invalid content detected',
+                details: 'File contains potentially malicious content'
+            });
         }
 
         next();
