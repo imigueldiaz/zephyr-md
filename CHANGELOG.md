@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Added pre-validation sanitization to prevent code injection in front matter parsing (2025-01-18)
+
 ### Added
 - Authentication and File Upload System (2025-01-12)
   - Added authentication system with JWT tokens
