@@ -130,6 +130,10 @@ function sanitizeContent(content: string): string {
         sanitized = sanitized.replace(pattern, '');
     }
     
+    // Fourth layer: protect against template string injection
+    sanitized = sanitized.replace(/\$\{.*?\}/g, ''); // Remove ${...} template expressions
+    sanitized = sanitized.replace(/`/g, '\''); // Replace backticks with single quotes
+    
     return sanitized;
 }
 
