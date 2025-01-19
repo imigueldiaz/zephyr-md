@@ -18,15 +18,16 @@ WORKDIR /app
 # Copiar solo package.json primero
 COPY package.json ./
 
-# Instalar dependencias
-RUN yarn install
+# Instalar dependencias y TypeScript globalmente
+RUN yarn global add typescript && \
+    yarn install --frozen-lockfile
 
 # Copiar el resto de archivos
 COPY . .
 
 # Crear directorios necesarios
-RUN mkdir -p /app/content /app/public /app/templates/default
-RUN chown -R appuser:appgroup /app/content /app/public /app/templates/default
+RUN mkdir -p /app/content /app/public /app/templates/default && \
+    chown -R appuser:appgroup /app/content /app/public /app/templates/default
 
 # Construir la aplicación
 RUN yarn build
@@ -45,6 +46,6 @@ VOLUME ["/app/content", "/app/public"]
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8585/ || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8585/ || exit 1
 
 CMD ["yarn", "start"]

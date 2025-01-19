@@ -12,13 +12,14 @@ services:
       - ./content:/app/content
       - ./public:/app/public
       - ./templates:/app/templates
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=8585
-      # Auth environment variables
-      - JWT_SECRET=${JWT_SECRET}
-      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
-    env_file:
-      - .env
     restart: unless-stopped
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8585/ || exit 1
+      interval: 30s
+      timeout: 3s
+      retries: 3
