@@ -32,6 +32,7 @@ A modern, lightweight static site generator focused on markdown-based blogging w
 - 🚦 **Rate Limiting**: Protection against abuse (100 requests per 15 minutes)
 - 👤 **Non-root Docker User**: Enhanced container security
 - 🔐 **CSP Headers**: Strict Content Security Policy
+- 🍪 **Secure Cookies**: HTTP-only, Secure, and SameSite cookie configuration
 
 ## 🚀 Quick Start
 
@@ -142,6 +143,8 @@ ADMIN_USERNAME=admin
 # Node Environment
 NODE_ENV=production
 PORT=8585
+COOKIE_DOMAIN=localhost
+JWT_EXPIRY=86400000
 ```
 
 2. Run with docker-compose:
@@ -158,6 +161,8 @@ docker-compose up -d
 | `ADMIN_USERNAME` | Admin username | admin |
 | `PORT` | Server port | 8585 |
 | `NODE_ENV` | Node environment | production |
+| `COOKIE_DOMAIN` | Cookie domain restriction | localhost |
+| `JWT_EXPIRY` | JWT token expiration time (ms) | 86400000 |
 
 #### Generating Secure Credentials
 
@@ -304,7 +309,27 @@ Creating a new theme from scratch can be challenging due to the complexity of th
 4. Use browser dev tools to understand the existing styles
 5. Document your changes for future maintenance
 
-## Docker
+## 🔒 Security Features
+
+### Cookie Security
+- **HTTP-Only**: Prevents client-side access to sensitive cookies
+- **Secure Flag**: Ensures cookies are only sent over HTTPS in production
+- **SameSite**: Protection against CSRF attacks
+- **Domain Restriction**: Limits cookie scope to specific domains
+- **Configurable Expiration**: Control over session duration
+
+### Authentication
+- JWT-based authentication with secure storage in HTTP-only cookies
+- Rate limiting to prevent brute force attacks
+- Secure password hashing with bcrypt
+- Environment-based security configuration
+
+### Content Security
+- **Helmet Integration**: Comprehensive security headers
+- **CSP Headers**: Strict Content Security Policy
+- **Rate Limiting**: Protection against abuse (100 requests per 15 minutes)
+
+## 🐳 Docker
 
 You can run Zephyr MD using Docker:
 
@@ -383,6 +408,8 @@ docker-compose up -d
 - `PORT`: Server port (default: 8585)
 - `HOST`: Server host (default: localhost)
 - `NODE_ENV`: Environment mode (development/production)
+- `COOKIE_DOMAIN`: Cookie domain restriction (default: localhost)
+- `JWT_EXPIRY`: JWT token expiration time (ms) (default: 86400000)
 
 ### Volumes
 

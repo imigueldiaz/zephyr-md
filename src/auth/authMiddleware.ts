@@ -1,25 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { JWTPayload, AuthConfig } from './authTypes';
-import fs from 'fs';
-import path from 'path';
+import { JWTPayload } from './authTypes';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const loadConfig = (): string => {
-    try {
-        const configPath = path.join(process.cwd(), 'config.json');
-        const configContent = fs.readFileSync(configPath, 'utf8');
-        const fullConfig = JSON.parse(configContent);
-        const authConfig = fullConfig.auth as AuthConfig;
-        
-        if (!authConfig || !authConfig.jwtSecret) {
-            throw new Error('JWT secret not found in config');
-        }
-        
-        return authConfig.jwtSecret;
-    } catch (error) {
-        console.error('Error loading JWT secret:', error);
-        throw error;
+    const jwtSecret = process.env.JWT_SECRET;
+    
+    if (!jwtSecret) {
+        throw new Error('JWT_SECRET environment variable is not set');
     }
+    
+    return jwtSecret;
 };
 
 const jwtSecret = loadConfig();

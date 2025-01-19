@@ -76,6 +76,20 @@ export async function initialize() {
     crossOriginResourcePolicy: false,
   }));
   app.use(cookieParser());
+  
+  // Set secure cookie options
+  app.set('trust proxy', 1); // trust first proxy if behind one
+  app.use((req, res, next) => {
+    res.cookie('cookieName', 'cookieValue', {
+      httpOnly: true, // Prevents client-side access to cookies
+      secure: process.env.NODE_ENV === 'production', // Requires HTTPS in production
+      sameSite: 'strict', // Protects against CSRF
+      path: '/', // Restrict cookie to root path
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+    next();
+  });
+
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 

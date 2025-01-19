@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- Enhanced cookie security implementation (2025-01-19)
+  - Added secure cookie configuration with httpOnly and sameSite flags
+  - Implemented domain restriction for cookies
+  - Added configurable cookie expiration
+  - Moved JWT token to secure HTTP-only cookies
 - Enhanced security for environment variables management (2025-01-18)
   - Moved sensitive data from config.json to environment variables
   - Added secure JWT secret handling

@@ -99,18 +99,15 @@ export const generateToken = (username: string): string => {
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
     try {
-        console.log('Login attempt:', req.body);
 
         // Validate request
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            console.log('Validation errors:', errors.array());
             res.status(400).json({ errors: errors.array() });
             return;
         }
 
         const { username, password } = req.body;
-        console.log('Attempting login for user:', username);
 
         // Verify config is loaded
         if (!config.users || !Array.isArray(config.users)) {
@@ -122,17 +119,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         // Find user
         const user = config.users.find(u => u.username === username);
         if (!user) {
-            console.log('User not found:', username);
             res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
 
-        console.log('User found, verifying password');
-
         // Verify password
         const isValid = await comparePassword(password, user.password);
-        console.log('Password valid:', isValid);
-
         if (!isValid) {
             res.status(401).json({ message: 'Invalid credentials' });
             return;
@@ -140,14 +132,22 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
         // Generate token
         const token = generateToken(username);
-        console.log('Generated token:', token);
+
+        // Set secure cookie with JWT token
+        res.cookie('jwt', token, {
+            httpOnly: true, // Prevents client-side access
+            secure: process.env.NODE_ENV === 'production', // Requires HTTPS in production
+            sameSite: 'strict', // Protects against CSRF
+            path: '/', // Restrict to root path
+            maxAge: parseInt(process.env.JWT_EXPIRY || '86400000'), // 24 hours by default
+            domain: process.env.COOKIE_DOMAIN || undefined // Restrict to specific domain if set
+        });
 
         const response: AuthResponse = {
             token,
             username
         };
 
-        console.log('Login successful for user:', username);
         res.json(response);
     } catch (error) {
         console.error('Login error:', error);

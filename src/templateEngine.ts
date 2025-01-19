@@ -55,7 +55,6 @@ export class TemplateEngine {
     };
 
     constructor(config: Config) {
-        console.log('TemplateEngine constructor - Config received:', config);
         this.config = config;
         this.addCssFile('base.css');
         this.addCssFile('code.css');
@@ -68,20 +67,13 @@ export class TemplateEngine {
 
     private async loadTemplate(name: string): Promise<HandlebarsTemplateDelegate> {
         try {
-            console.log(`Attempting to load template ${name}`);
             if (this.templateCache.has(name)) {
-                console.log(`Template ${name} found in cache`);
                 return this.templateCache.get(name)!;
             }
 
             // Construir la ruta del template
             const templatePath = join(__dirname, '../templates', this.config.site.siteTheme, `${name}.html`);
-            console.log('Loading template from:', templatePath);
-            console.log('Template directory exists:', existsSync(join(__dirname, '../templates', this.config.site.siteTheme)));
-            
             const templateContent = await readFile(templatePath, 'utf-8');
-            console.log(`Template ${name} content loaded:`, templateContent.substring(0, 100) + '...');
-            
             const template = Handlebars.compile(templateContent);
             this.templateCache.set(name, template);
             return template;
@@ -93,23 +85,18 @@ export class TemplateEngine {
 
     async renderTemplate(name: string, data: TemplateData = {}): Promise<string> {
         try {
-            console.log(`Rendering template ${name} with data:`, data);
             const template = await this.loadTemplate(name);
             const commonData = await this.getCommonData();
             const mergedData = { ...commonData, ...data };
-            console.log(`Merged data for ${name}:`, mergedData);
             
             // If it's a post or index template, wrap it in the base template
             if (name === 'post' || name === 'index' || name === 'tag' || name === 'login' || name === 'upload') {
-                console.log(`Wrapping ${name} in base template`);
                 const content = template(mergedData);
-                console.log(`Content for ${name}:`, content);
                 const baseTemplate = await this.loadTemplate('base');
                 const result = baseTemplate({
                     ...mergedData,
                     content
                 });
-                console.log(`Final result for ${name}:`, result);
                 return await this.minifyHtml(result);
             }
 

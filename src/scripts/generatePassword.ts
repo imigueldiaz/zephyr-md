@@ -41,8 +41,6 @@ async function generatePassword() {
         // Write updated config
         await writeFile(configPath, JSON.stringify(config, null, 4));
 
-        console.log('Configuration updated successfully!');
-        console.log('Admin password and JWT secret have been set.');
     } catch (error) {
         console.error('Error:', error);
     } finally {

@@ -165,7 +165,6 @@
         };
         
         try {
-            console.log('Sending login request to:', '/admin/auth/login');
             const response = await fetch('/admin/auth/login', {
                 method: 'POST',
                 headers: {
@@ -174,15 +173,12 @@
                 body: JSON.stringify(formData)
             });
 
-            console.log('Response status:', response.status);
             const data = await response.json();
-            console.log('Response data:', data);
 
             if (!response.ok) {
                 throw new Error(data.message || 'Error logging in');
             }
 
-            console.log('Login successful, storing token');
             localStorage.setItem('authToken', data.token);
             window.location.href = '/admin/upload';
         } catch (error) {
