@@ -2,6 +2,7 @@
     <div class="login-container">
         <h1 class="page-title"><i class="fas fa-lock"></i> Admin Login</h1>
         <form id="loginForm" class="login-form">
+            <input type="hidden" name="_csrf" value="{{csrfToken}}">
             <div class="form-group">
                 <label for="username" class="form-label">
                     <i class="fas fa-user"></i> Username:
@@ -168,7 +169,8 @@
             const response = await fetch('/admin/auth/login', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': document.querySelector('input[name="_csrf"]').value
                 },
                 body: JSON.stringify(formData)
             });

@@ -2,7 +2,7 @@
     <div class="upload-container">
         <h1 class="page-title"><i class="fas fa-upload"></i> Upload Markdown Post</h1>
         <form id="uploadForm" class="upload-form">
-            
+            <input type="hidden" name="_csrf" value="{{csrfToken}}">
             <div class="form-group">
                 <label for="markdownFile" class="form-label">
                     <i class="fas fa-file-markdown"></i> Markdown File:
@@ -135,7 +135,8 @@
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'x-csrf-token': document.querySelector('input[name="_csrf"]').value
             },
             body: JSON.stringify({ action: 'verify' })
         }).then(response => {
@@ -167,7 +168,8 @@
             const response = await fetch('/admin/upload', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'x-csrf-token': document.querySelector('input[name="_csrf"]').value
                 },
                 body: formData
             });

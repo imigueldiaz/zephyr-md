@@ -14,6 +14,7 @@ import { upload } from './uploads/uploadMiddleware';
 import { uploadMarkdown, validateMarkdownUpload } from './uploads/uploadController';
 import { renderUploadForm, handleUpload } from './admin/adminController';
 import cookieParser from 'cookie-parser';
+import { generateCsrfToken, validateCsrfToken } from './middleware/csrfMiddleware';
 
 export async function initialize() {
   // Crear directorio de logs si no existe
@@ -92,6 +93,10 @@ export async function initialize() {
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  // Apply CSRF protection
+  app.use(generateCsrfToken);
+  app.use(validateCsrfToken);
 
   // Rate limiting
   const limiter = rateLimit({

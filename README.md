@@ -104,6 +104,18 @@ yarn build
 
 The static site will be generated in the `dist` directory.
 
+## 🔒 Security Features
+
+- **JWT Authentication**: Secure authentication using JSON Web Tokens
+- **CSRF Protection**: Built-in protection against Cross-Site Request Forgery attacks using cryptographically secure tokens and double-submit cookie pattern
+- **Helmet Integration**: Comprehensive security headers
+- **Rate Limiting**: Protection against abuse (100 requests per 15 minutes)
+- **Non-root Docker User**: Enhanced container security
+- **CSP Headers**: Strict Content Security Policy
+- **Secure Cookies**: HTTP-only, Secure, and SameSite cookie configuration
+- **Input Validation**: Strict validation and sanitization of all user inputs
+- **File Upload Security**: Secure file upload handling with type and size restrictions
+
 ## 🔒 Authentication and Admin Features
 
 Zephyr MD includes a secure admin interface for managing content:
@@ -120,11 +132,13 @@ Zephyr MD includes a secure admin interface for managing content:
 
 ```bash
 docker run -d \
-  --name zephyr-md \
   -p 8585:8585 \
   -e JWT_SECRET=your_jwt_secret \
   -e ADMIN_PASSWORD_HASH=your_bcrypt_hash \
   -e ADMIN_USERNAME=admin \
+  -e NODE_ENV=production \
+  -e COOKIE_DOMAIN=localhost \
+  -e JWT_EXPIRY=86400000 \
   -v $(pwd)/content:/app/content \
   -v $(pwd)/public:/app/public \
   -v $(pwd)/templates:/app/templates \
@@ -209,6 +223,29 @@ excerpt: A brief description
 
 Your content here...
 ```
+
+## 🔧 Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# JWT Configuration
+JWT_SECRET=your_jwt_secret_here
+
+# Admin User Configuration
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD_HASH=your_bcrypt_hash_here
+
+# Node Environment
+NODE_ENV=development
+PORT=8585
+
+# Cookie Settings
+COOKIE_DOMAIN=localhost
+JWT_EXPIRY=86400000  # 24 hours in milliseconds
+```
+
+For Docker deployment, you can use the provided `.env.docker.example` as a template.
 
 ## 🎨 Customization
 
@@ -342,6 +379,12 @@ docker run -d \
   -p 8585:8585 \
   -v $(pwd)/content:/app/content \
   -v $(pwd)/public:/app/public \
+  -e JWT_SECRET=your_jwt_secret_here \
+  -e ADMIN_PASSWORD_HASH=your_password_hash_here \
+  -e ADMIN_USERNAME=admin \
+  -e NODE_ENV=production \
+  -e COOKIE_DOMAIN=localhost \
+  -e JWT_EXPIRY=86400000 \
   --name zephyr-md \
   zephyr-md
 ```
@@ -357,6 +400,24 @@ docker run -d \
   -v $(pwd)/content:/app/content \
   -v $(pwd)/public:/app/public \
   -v $(pwd)/templates:/app/templates \
+  -e JWT_SECRET=your_jwt_secret_here \
+  -e ADMIN_PASSWORD_HASH=your_password_hash_here \
+  -e ADMIN_USERNAME=admin \
+  -e NODE_ENV=production \
+  -e COOKIE_DOMAIN=localhost \
+  -e JWT_EXPIRY=86400000 \
+  --name zephyr-md \
+  zephyr-md
+```
+
+Alternatively, you can use an environment file:
+```bash
+docker run -d \
+  -p 8585:8585 \
+  -v $(pwd)/content:/app/content \
+  -v $(pwd)/public:/app/public \
+  -v $(pwd)/templates:/app/templates \
+  --env-file .env \
   --name zephyr-md \
   zephyr-md
 ```

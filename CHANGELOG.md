@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- Enhanced CSRF protection (2025-01-19)
+  - Replaced deprecated csurf package with express-csrf
+  - Added double-submit cookie pattern for CSRF tokens
+  - Implemented CSRF protection in login and upload forms
+  - Added secure token validation middleware
 - Enhanced cookie security implementation (2025-01-19)
   - Added secure cookie configuration with httpOnly and sameSite flags
   - Implemented domain restriction for cookies
